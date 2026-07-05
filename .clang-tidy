@@ -191,12 +191,12 @@ ExtraArgs: ['-Wall', '-Wextra', '--std=c23', '-c', '-O0', '--pedantic', '-DDEBUG
 FormatStyle: file
 # format the source file using the specs in the .clang-format file.
 
-HeaderFileExtensions:         ['h', 'cuh']
+HeaderFileExtensions:         ['h']
 
 HeaderFilterRegex:   ''
 # ignore diagnostics from c++ STL headers.
 
-ImplementationFileExtensions: ['c', 'cu']
+ImplementationFileExtensions: ['c']
 
 WarningsAsErrors: '-*'
 # do not treat all clang-tidy warnings as errors, similar to -Werr, but for linting

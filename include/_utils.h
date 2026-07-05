@@ -23,10 +23,10 @@
 
 #ifdef _DEBUG
     #define __printf_debug(...) printf(__VA_ARGS__)
-    #define DEBUG_EXEC(...)     (__VA_ARGS__)
+    #define __debug(...)        (__VA_ARGS__)
 #else
     #define __printf_debug(...)
-    #define DEBUG_EXEC(...)
+    #define __debug(...)
 #endif // _DEBUG
 
 static inline unsigned char* imopen(const char* const fpath, long* const nreadbytes) {

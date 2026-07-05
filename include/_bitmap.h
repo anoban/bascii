@@ -82,7 +82,7 @@ static inline BITMAPINFOHEADER infoheader(const unsigned char* const imstream, c
     return header;
 }
 
-static inline BITMAP_PIXEL_ORDERING pixelorder(const BITMAPINFOHEADER* const restrict header) {
+static inline BITMAP_PIXEL_ORDERING pixelorder(const BITMAPINFOHEADER* const header) {
     return (header->biHeight >= 0) ? BOTTOMUP : TOPDOWN;
 }
 
