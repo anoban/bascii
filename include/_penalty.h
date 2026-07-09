@@ -8,7 +8,7 @@
 // PREREQUISITES  all the scale factors must be within the range of 0 and 1 and the sum of all three of them should never go above 1.000
 // POTENTIAL HAZARD  access violations may happen when the above requisites are not met!
 static inline wchar_t tunable_mapper(
-    const RGBQUAD* const restrict pixel,
+    const rgbq* const restrict pixel,
     const float bscale, // scaling factor for blue
     const float gscale, // scaling factor for green
     const float rscale, // scaling factor for red
@@ -29,7 +29,7 @@ static inline wchar_t tunable_mapper(
 // PREREQUISITES  penalty must be a float in between [0.0, 1.0] (an inclusive range)
 // if you don't want a certain colour to be considered for penalization, specify both limits for that colour as UCHAR_MAX (or any identical values)
 static __attribute__((always_inline)) wchar_t penalizing_arithmeticmapper(
-    const RGBQUAD* const restrict pixel,
+    const rgbq* const restrict pixel,
     const unsigned char bllim, // lower limit for blue pixels
     const unsigned char bulim, // upper limit for blue pixels
     const unsigned char gllim,
@@ -55,7 +55,7 @@ static __attribute__((always_inline)) wchar_t penalizing_arithmeticmapper(
 }
 
 static __attribute__((always_inline)) wchar_t penalizing_weightedmapper(
-    const RGBQUAD* const restrict pixel,
+    const rgbq* const restrict pixel,
     const unsigned char bllim,
     const unsigned char bulim,
     const unsigned char gllim,
@@ -77,7 +77,7 @@ static __attribute__((always_inline)) wchar_t penalizing_weightedmapper(
 }
 
 static __attribute__((always_inline)) wchar_t penalizing_minmaxmapper(
-    const RGBQUAD* const restrict pixel,
+    const rgbq* const restrict pixel,
     const unsigned char bllim,
     const unsigned char bulim,
     const unsigned char gllim,
@@ -100,7 +100,7 @@ static __attribute__((always_inline)) wchar_t penalizing_minmaxmapper(
 }
 
 static __attribute__((always_inline)) wchar_t penalizing_luminositymapper(
-    const RGBQUAD* const restrict pixel,
+    const rgbq* const restrict pixel,
     const unsigned char bllim,
     const unsigned char bulim,
     const unsigned char gllim,

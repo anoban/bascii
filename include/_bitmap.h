@@ -11,11 +11,11 @@
 
 // a struct representing a windows bitmap
 typedef struct {
-        BITMAPFILEHEADER _fileheader;
-        BITMAPINFOHEADER _infoheader;
-        RGBQUAD*         _pixels; // this points to the start of pixels in the file buffer i.e (_buffer + 54)
+        fhead          _fileheader;
+        infhead        _infoheader;
+        rgbq*          _pixels; // this points to the start of pixels in the file buffer i.e (_buffer + 54)
         // _pixels IS NOT A SEPARATE BUFFER, IT IS JUST A REFERENCE TO A BYTE FEW STRIDES (54 BYTES) INTO THE ACTUAL BYTES BUFFER
-        unsigned char*   _buffer; // this will point to the original file buffer, this is the one that needs deallocation!
+        unsigned char* _buffer; // this will point to the original file buffer, this is the one that needs deallocation!
 } bitmap;
 
 // order of pixels in the BMP buffer.
@@ -28,9 +28,9 @@ typedef enum { RGB, RLE8, RLE4, BITFIELDS, UNKNOWN } BITMAP_COMPRESSION_KIND;
 // when we dereference this 16 bits as an unsigned 16 bit integer on LE machines, the byte order will get swapped i.e the two bytes will be read as 'M', 'B'
 static const unsigned short START_TAG_LE = L'M' << 8 | L'B';
 
-static inline BITMAPFILEHEADER fileheader(const unsigned char* const restrict imstream, const unsigned size) {
-    assert(size >= sizeof(BITMAPFILEHEADER));
-    BITMAPFILEHEADER header = { .bfType = 0, .bfSize = 0, .bfReserved1 = 0, .bfReserved2 = 0, .bfOffBits = 0 };
+static inline fhead fileheader(const unsigned char* const restrict imstream, const unsigned size) {
+    assert(size >= sizeof(fhead));
+    fhead header = { .type = 0, .size = 0, ._reserved_0 = 0, ._reserved_1 = 0, .offbits = 0 };
 
     if (*((unsigned short*) (imstream)) != START_TAG_LE) {
         fprintf(
@@ -44,16 +44,16 @@ static inline BITMAPFILEHEADER fileheader(const unsigned char* const restrict im
         return header;
     }
 
-    header.bfType    = START_TAG_LE;
-    header.bfSize    = *(unsigned*) (imstream + 2);
-    header.bfOffBits = *(unsigned*) (imstream + 10);
-    
+    header.type    = START_TAG_LE;
+    header.size    = *(unsigned*) (imstream + 2);
+    header.offbits = *(unsigned*) (imstream + 10);
+
     return header;
 }
 
-static inline BITMAPINFOHEADER infoheader(const unsigned char* const imstream, const unsigned size) {
-    assert(size >= (sizeof(BITMAPFILEHEADER) + sizeof(BITMAPINFOHEADER)));
-    BITMAPINFOHEADER header = { 0 };
+static inline infhead infoheader(const unsigned char* const imstream, const unsigned size) {
+    assert(size >= (sizeof(fhead) + sizeof(infhead)));
+    infhead header = { 0 };
 
     if (*((unsigned*) (imstream + 14U)) > 40U) {
         fprintf(
@@ -67,24 +67,22 @@ static inline BITMAPINFOHEADER infoheader(const unsigned char* const imstream, c
         return header;
     }
 
-    header.biSize          = *((unsigned*) (imstream + 14U));
-    header.biWidth         = *((int*) (imstream + 18U));
-    header.biHeight        = *((int*) (imstream + 22U));
-    header.biPlanes        = *((unsigned short*) (imstream + 26U));
-    header.biBitCount      = *((unsigned short*) (imstream + 28U));
-    header.biCompression   = *((unsigned*) (imstream + 30U));
-    header.biSizeImage     = *((unsigned*) (imstream + 34U));
-    header.biXPelsPerMeter = *((int*) (imstream + 38U));
-    header.biYPelsPerMeter = *((int*) (imstream + 42U));
-    header.biClrUsed       = *((unsigned*) (imstream + 46U));
-    header.biClrImportant  = *((unsigned*) (imstream + 50U));
+    header.size        = *((unsigned*) (imstream + 14U));
+    header.width       = *((int*) (imstream + 18U));
+    header.height      = *((int*) (imstream + 22U));
+    header.planes      = *((unsigned short*) (imstream + 26U));
+    header.nbits       = *((unsigned short*) (imstream + 28U));
+    header.compression = *((unsigned*) (imstream + 30U));
+    header.imagesize   = *((unsigned*) (imstream + 34U));
+    header.ppm_x       = *((int*) (imstream + 38U));
+    header.ppm_y       = *((int*) (imstream + 42U));
+    header.used_clrs   = *((unsigned*) (imstream + 46U));
+    header.imp_clrs    = *((unsigned*) (imstream + 50U));
 
     return header;
 }
 
-static inline BITMAP_PIXEL_ORDERING pixelorder(const BITMAPINFOHEADER* const header) {
-    return (header->biHeight >= 0) ? BOTTOMUP : TOPDOWN;
-}
+static inline BITMAP_PIXEL_ORDERING pixelorder(const infhead* const header) { return (header->height >= 0) ? BOTTOMUP : TOPDOWN; }
 
 // reads in a bmp file from disk and deserializes it into a bitmap_t struct
 static inline bitmap bmpread(const char* const filepath) {
@@ -94,17 +92,17 @@ static inline bitmap bmpread(const char* const filepath) {
     const unsigned char* const buffer = imopen(filepath, &size);
     if (!buffer) return image; // open will do the error reporting, so just exiting the function is enough
 
-    const BITMAPFILEHEADER fhead = fileheader(buffer, size);
-    if (!fhead.bfSize) return image;
+    const fhead fhead = fileheader(buffer, size);
+    if (!fhead.size) return image;
     // again parse_fileheader will report errors and free the buffer, if the predicate isn't satisified, just exit the routine
 
-    const BITMAPINFOHEADER infhead = infoheader(buffer, size);
-    if (!infhead.biSize) return image; // error reporting and resource cleanup are handled by parse_infoheader
+    const infhead infhead = infoheader(buffer, size);
+    if (!infhead.size) return image; // error reporting and resource cleanup are handled by parse_infoheader
 
     image._fileheader = fhead;
     image._infoheader = infhead;
     image._buffer     = buffer;
-    image._pixels     = (RGBQUAD*) (buffer + 54);
+    image._pixels     = (rgbq*) (buffer + 54);
 
     return image;
 }

@@ -4,12 +4,12 @@
     #include <time.h>
     #include <tostring.h>
 
-static_assert(sizeof(BITMAPINFOHEADER) == 40LLU);
-static_assert(sizeof(BITMAPFILEHEADER) == 14LLU);
+static_assert(sizeof(infhead) == 40LLU);
+static_assert(sizeof(fhead) == 14LLU);
 
-static const RGBQUAD min                    = { .rgbBlue = 0x00, .rgbGreen = 0x00, .rgbRed = 0x00, .rgbReserved = 0xFF };
-static const RGBQUAD mid                    = { .rgbBlue = 0x80, .rgbGreen = 0x80, .rgbRed = 0x80, .rgbReserved = 0xFF };
-static const RGBQUAD max                    = { .rgbBlue = 0xFF, .rgbGreen = 0xFF, .rgbRed = 0xFF, .rgbReserved = 0xFF };
+static const rgbq min                       = { .rgbBlue = 0x00, .rgbGreen = 0x00, .rgbRed = 0x00, .rgbReserved = 0xFF };
+static const rgbq mid                       = { .rgbBlue = 0x80, .rgbGreen = 0x80, .rgbRed = 0x80, .rgbReserved = 0xFF };
+static const rgbq max                       = { .rgbBlue = 0xFF, .rgbGreen = 0xFF, .rgbRed = 0xFF, .rgbReserved = 0xFF };
 
 // a 300 byte chunk extracted from a real BMP file, for testing
 static const unsigned char const dummybmp[] = {
@@ -54,7 +54,7 @@ int wmain(void) {
     assert(luminosity(&max) == UCHAR_MAX - 1);
     assert(luminosity(&mid) == 128);
 
-    RGBQUAD test = { 0x00, 0x00, 0x00, 0xFF };
+    rgbq test = { 0x00, 0x00, 0x00, 0xFF };
 
     for (unsigned blue = 0; blue <= UCHAR_MAX; ++blue) {
         for (unsigned green = 0; green <= UCHAR_MAX; ++green) {
@@ -73,7 +73,7 @@ int wmain(void) {
     #pragma endregion
 
     #pragma region __TEST_RGBMAPPERS__
-    RGBQUAD       temp    = { 0 };
+    rgbq          temp    = { 0 };
     float         bscaler = 0.000, gscaler = 0.000, rscaler = 0.000, rnd = 0.000;
     unsigned char r = 0, g = 0, b = 0;
 
@@ -202,14 +202,14 @@ int wmain(void) {
     #pragma endregion
 
     #pragma region __TEST_PARSERS__
-    const BITMAPFILEHEADER bmpfh = parse_fileheader(dummybmp, __crt_countof(dummybmp));
+    const fhead bmpfh = parse_fileheader(dummybmp, __crt_countof(dummybmp));
     assert(bmpfh.bfType == START_TAG_LE);
     assert(bmpfh.bfSize == 1409334); // size of the image where this buffer was extracted from, in bytes
     assert(bmpfh.bfReserved1 == 0);
     assert(bmpfh.bfReserved2 == 0);
     assert(bmpfh.bfOffBits == 54);
 
-    const BITMAPINFOHEADER bmpinfh = parse_infoheader(dummybmp, __crt_countof(dummybmp));
+    const infhead bmpinfh = parse_infoheader(dummybmp, __crt_countof(dummybmp));
     assert(bmpinfh.biSize == 40); // header size
     assert(bmpinfh.biWidth == 734);
     assert(bmpinfh.biHeight == 480);
