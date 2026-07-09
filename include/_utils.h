@@ -1,8 +1,6 @@
 #pragma once
 
-#define ONE       1.000000000
-#define min(x, y) (((x) < (y) ? (x) : (y)))
-#define max(x, y) (((x) > (y) ? (x) : (y)))
+#define ONE 1.000000000
 
 #include <assert.h>
 #include <errno.h>
@@ -94,8 +92,8 @@ static inline unsigned weighted(const RGBQUAD* const restrict pixel) {
 // average of minimum and maximum RGB values in a pixel
 static inline unsigned minmax(const RGBQUAD* const restrict pixel) {
     // we don't want overflows or truncations here
-    return (unsigned) ((((double) min(min(pixel->rgbBlue, pixel->rgbGreen), pixel->rgbRed)) +
-                        max(max(pixel->rgbBlue, pixel->rgbGreen), pixel->rgbRed)) /
+    return (unsigned) (((fmin(fmin(pixel->rgbBlue, pixel->rgbGreen), pixel->rgbRed)) +
+                        fmax(fmax(pixel->rgbBlue, pixel->rgbGreen), pixel->rgbRed)) /
                        2.0000);
 }
 
@@ -141,9 +139,9 @@ static inline wchar_t weighted_mapper(const RGBQUAD* const restrict pixel, const
 }
 
 static inline wchar_t minmax_mapper(const RGBQUAD* const restrict pixel, const wchar_t* const restrict palette, const unsigned plength) {
-    const unsigned offset = (((float) (min(min(pixel->rgbBlue, pixel->rgbGreen), pixel->rgbRed))) +
-                             (fmax(fmax(pixel->rgbBlue, pixel->rgbGreen), pixel->rgbRed))) /
-                            2.0000;
+    const unsigned offset = (unsigned) ((fmin(fmin(pixel->rgbBlue, pixel->rgbGreen), pixel->rgbRed) +
+                                         fmax(fmax(pixel->rgbBlue, pixel->rgbGreen), pixel->rgbRed)) /
+                                        2.0000);
     return palette[offset ? nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
 }
 
@@ -172,7 +170,7 @@ static inline wchar_t weighted_blockmapper(
 static inline wchar_t minmax_blockmapper(
     const float rgbBlue, const float rgbGreen, const float rgbRed, const wchar_t* const restrict palette, const unsigned plength
 ) {
-    const unsigned offset = (min(min(rgbBlue, rgbGreen), rgbRed) + fmax(max(rgbBlue, rgbGreen), rgbRed)) / 2.0000;
+    const unsigned offset = (fmin(fmin(rgbBlue, rgbGreen), rgbRed) + fmax(fmax(rgbBlue, rgbGreen), rgbRed)) / 2.0000;
     return palette[offset ? nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
 }
 

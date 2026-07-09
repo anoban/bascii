@@ -26,7 +26,6 @@ typedef enum { RGB, RLE8, RLE4, BITFIELDS, UNKNOWN } BITMAP_COMPRESSION_KIND;
 
 // BMP files store this tag as 'B', followed by 'M', i.e 0x424D as an unsigned 16 bit integer,
 // when we dereference this 16 bits as an unsigned 16 bit integer on LE machines, the byte order will get swapped i.e the two bytes will be read as 'M', 'B'
-static const unsigned short START_TAG_BE = L'B' << 8 | L'M';
 static const unsigned short START_TAG_LE = L'M' << 8 | L'B';
 
 static inline BITMAPFILEHEADER fileheader(const unsigned char* const restrict imstream, const unsigned size) {
@@ -48,6 +47,7 @@ static inline BITMAPFILEHEADER fileheader(const unsigned char* const restrict im
     header.bfType    = START_TAG_LE;
     header.bfSize    = *(unsigned*) (imstream + 2);
     header.bfOffBits = *(unsigned*) (imstream + 10);
+    
     return header;
 }
 

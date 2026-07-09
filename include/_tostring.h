@@ -1,5 +1,6 @@
 #pragma once
 #include <_bitmap.h>
+#include <stddef.h>
 
 #define CONSOLE_WIDTH              140LL
 #define CONSOLE_WIDTHR             140.0
@@ -23,11 +24,10 @@ static inline char* to_raw_string(const bitmap* const restrict image) {
     }
 
     const long long npixels = (long long) image->_infoheader.biHeight * image->_infoheader.biWidth; // total pixels in the image
-    const long long nwchars /* 1 wchar_t for each pixel + 2 additional wchar_ts for CRLF at the end of each scanline */ =
-        npixels + 2LLU * image->_infoheader.biHeight;
-    // space for two extra wchar_ts (L'\r', L'\n') to be appended to the end of each line
+    const long long nchars /* 1 wchar_t for each pixel + 1 additional character for LF ('\n') at the end of each scanline */ =
+        npixels + 1LL * image->_infoheader.biHeight;
 
-    char* const restrict buffer = malloc(nwchars + 1); // and the +1 is for the NULL terminator
+    char* const restrict buffer = malloc(nchars + 1); // and the +1 is for the NULL terminator
     if (!buffer) {
         fprintf(stderr, "Error in %s @ line %d: malloc failed!\n", __FUNCTION__, __LINE__);
         return NULL;
@@ -55,7 +55,7 @@ static inline char* to_raw_string(const bitmap* const restrict image) {
 
     buffer[caret] = 0; // null termination of the string
 
-    assert(caret == nwchars);
+    assert(caret == nchars);
     return buffer;
 }
 
@@ -234,7 +234,7 @@ static inline char* to_downscaled_string(const bitmap* const restrict image) {
     return buffer;
 }
 
-// an image width predicated dispatcher for to_raw_string and to_downscaled_string
+// an image width dependent dispatcher for to_raw_string and to_downscaled_string, that actually do the heavy lifting
 static inline char* to_string(const bitmap* const restrict image) {
     if (image->_infoheader.biWidth <= CONSOLE_WIDTH) return to_raw_string(image);
     return to_downscaled_string(image);
