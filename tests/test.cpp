@@ -1,8 +1,6 @@
-#ifdef __TEST__
-
-    #define TEST_TIMES 5LL // DON'T EVEN THINK ABOUT INCREASING THIS. WITH 5 ALONE, TESTING TOOK A FEW MINUTES TO FINISH!
-    #include <time.h>
-    #include <tostring.h>
+#define TEST_TIMES 5LL // DON'T EVEN THINK ABOUT INCREASING THIS. WITH 5 ALONE, TESTING TOOK A FEW MINUTES TO FINISH!
+#include <time.h>
+#include <_tostring.h>
 
 static_assert(sizeof(infhead) == 40LLU);
 static_assert(sizeof(fhead) == 14LLU);
@@ -31,13 +29,13 @@ static const float RNDMAX = RAND_MAX + 2.0000;
 int wmain(void) {
     srand(time(NULL));
 
-    #pragma region __TEST_BMP_STARTTAGS__
+#pragma region __TEST_BMP_STARTTAGS__
     assert(START_TAG_BE == 0x424D);
     assert(START_TAG_LE == 0x4D42);
     assert(*(unsigned short*) (dummybmp) == START_TAG_LE);
-    #pragma endregion
+#pragma endregion
 
-    #pragma region __TEST_TRANSFORMERS__
+#pragma region __TEST_TRANSFORMERS__
     assert(arithmetic(&min) == 0);
     assert(arithmetic(&max) == UCHAR_MAX);
     assert(arithmetic(&mid) == 128);
@@ -70,9 +68,9 @@ int wmain(void) {
             }
         }
     }
-    #pragma endregion
+#pragma endregion
 
-    #pragma region __TEST_RGBMAPPERS__
+#pragma region __TEST_RGBMAPPERS__
     rgbq          temp    = { 0 };
     float         bscaler = 0.000, gscaler = 0.000, rscaler = 0.000, rnd = 0.000;
     unsigned char r = 0, g = 0, b = 0;
@@ -199,9 +197,9 @@ int wmain(void) {
         }
     }
 
-    #pragma endregion
+#pragma endregion
 
-    #pragma region __TEST_PARSERS__
+#pragma region __TEST_PARSERS__
     const fhead bmpfh = parse_fileheader(dummybmp, __crt_countof(dummybmp));
     assert(bmpfh.bfType == START_TAG_LE);
     assert(bmpfh.bfSize == 1409334); // size of the image where this buffer was extracted from, in bytes
@@ -224,9 +222,9 @@ int wmain(void) {
 
     const BITMAP_PIXEL_ORDERING order = get_pixel_order(&bmpinfh);
     assert(order == BOTTOMUP);
-    #pragma endregion
+#pragma endregion
 
-    #pragma region __TEST_ALL__
+#pragma region __TEST_ALL__
     // all of these test images will cause to_string to reroute to to_raw_string
     static const wchar_t* const filenames[] = { L"./test/bobmarley.bmp", L"./test/football.bmp",  L"./test/garfield.bmp",
                                                 L"./test/gewn.bmp",      L"./test/girl.bmp",      L"./test/jennifer.bmp",
@@ -250,10 +248,8 @@ int wmain(void) {
         bmpclose(&image);
         _ptr++;
     }
-    #pragma endregion
+#pragma endregion
 
     _putws(L"all's good :)");
     return EXIT_SUCCESS;
 }
-
-#endif
