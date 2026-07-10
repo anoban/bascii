@@ -12,9 +12,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include <sys/fcntl.h>
-#include <sys/stat.h>
-
 // clang-format off
 #include <_wingdi.h>
 // clang-format on
@@ -26,44 +23,6 @@
     #define __printf_debug(...)
     #define __debug(...)
 #endif // _DEBUG
-
-static inline unsigned char* imopen(const char* const fpath, long* const nreadbytes) {
-    *nreadbytes             = 0;
-    unsigned char* buffer   = NULL;
-    struct stat    filestat = {};
-    long           nbytes   = 0;
-
-    const int fdesc         = open(fpath, O_RDONLY);
-    if (fdesc == -1) { // if open() failed, the return value will be -1
-        fprintf(stderr, "Call to open() failed inside %s at line %d!; errno %d\n", __FUNCTION__, __LINE__, errno);
-        return NULL;
-    }
-
-    if (fstat(fdesc, &filestat)) { // if succeeds, 0 is returned, -1 if fails
-        fprintf(stderr, "Call to fstat() failed inside %s at line %d!; errno %d\n", __FUNCTION__, __LINE__, errno);
-        goto CLOSE_AND_RETURN;
-    }
-
-    if (!(buffer = malloc(filestat.st_size))) { // caller is responsible for freeing this buffer
-        fprintf(stderr, "Call to new() failed inside %s at line %d!\n", __FUNCTION__, __LINE__);
-        goto CLOSE_AND_RETURN;
-    }
-
-    if ((nbytes = read(fdesc, buffer, filestat.st_size)) != -1) {
-        *nreadbytes = nbytes;
-        assert(nbytes == filestat.st_size); // double checking
-    } else {
-        fprintf(stderr, "Call to read() failed inside %s at line %d!; errno %d\n", __FUNCTION__, __LINE__, errno);
-        free(buffer);
-        buffer = NULL;
-    }
-    // then, fall through the CLOSE_AND_RETURN label
-
-CLOSE_AND_RETURN:
-    // close() returns 0 on success and -1 on failure
-    if (close(fdesc)) fprintf(stderr, "Call to close() failed inside %s at line %d!; errno %d\n", __FUNCTION__, __LINE__, errno);
-    return buffer;
-}
 
 // characters in ascending order of luminance
 static const char palette_minimal[]  = { '_', '.', ',', '-', '=', '+', ':', ';', 'c', 'b', 'a', '!', '?', '1',
