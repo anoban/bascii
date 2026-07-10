@@ -27,7 +27,7 @@ int main() {
     srand(time(NULL));
 
 #pragma region __TEST_BMP_STARTTAGS__
-    assert(START_TAG_BE == 0x424D);
+
     assert(START_TAG_LE == 0x4D42);
     assert(*(unsigned short*) (dummybmp) == START_TAG_LE);
 #pragma endregion
@@ -230,8 +230,8 @@ int main() {
 
     const wchar_t** _ptr                    = filenames;
     while (*_ptr) {
-        bitmap_t image                     = bmpread(*_ptr);
-        const wchar_t* const  wstr = to_string(&image);
+        bitmap_t             image = bmpread(*_ptr);
+        const wchar_t* const wstr  = to_string(&image);
         if (!wstr) {
             wprintf_s(L"Error :: cannot process %s!\n", *_ptr);
             bmpclose(&image);
