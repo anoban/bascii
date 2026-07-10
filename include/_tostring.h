@@ -17,7 +17,7 @@
 // IT IS NOT OBLIGATORY FOR BOTH THE BASIC MAPPER AND THE BLOCK MAPPER TO USE THE SAME PALETTE
 // IF NEED BE, THE PALETTE EXPANDED FROM spalette COULD BE REPLACED BY A REAL PALETTE NAME
 
-static inline char* to_raw_string(const bitmap* const restrict image) {
+static inline char* to_raw_string(const bitmap* const image) {
     if (image->infoheader.height < 0) {
         fputs("Error in to_raw_string, this tool does not support bitmaps with top-down pixel ordering!\n", stderr);
         return NULL;
@@ -27,7 +27,7 @@ static inline char* to_raw_string(const bitmap* const restrict image) {
     const long long nchars /* 1 wchar_t for each pixel + 1 additional character for LF ('\n') at the end of each scanline */ =
         npixels + 1LL * image->infoheader.height;
 
-    char* const restrict buffer = malloc(nchars + 1); // and the +1 is for the NULL terminator
+    char* const buffer = malloc(nchars + 1); // and the +1 is for the NULL terminator
     if (!buffer) {
         fprintf(stderr, "Error in %s @ line %d: malloc failed!\n", __FUNCTION__, __LINE__);
         return NULL;
@@ -62,7 +62,7 @@ static inline char* to_raw_string(const bitmap* const restrict image) {
 // generate the wchar_t buffer after downscaling the image such that the ascii representation will fit the terminal width (~142 chars),
 // downscaling is completely predicated only on the image width, and the proportionate scaling factor will be used to scale down the image vertically too.
 // downscaling needs to be done in square pixel blocks which will be represented by a single wchar_t
-static inline char* to_downscaled_string(const bitmap* const restrict image) {
+static inline char* to_downscaled_string(const bitmap* const image) {
     if (image->infoheader.height < 0) {
         fputs("Error in to_downscaled_string, this tool does not support bitmaps with top-down pixel ordering!\n", stderr);
         return NULL;
@@ -84,14 +84,14 @@ static inline char* to_downscaled_string(const bitmap* const restrict image) {
     long long pblocksize_bottom = (image->infoheader.height - (image->infoheader.height / block_d) * block_d) * block_d;
     assert(pblocksize_bottom < blocksize);
 
-    const long long nblocks_w   = ceill(image->infoheader.width / (float) block_d);
-    const long long nblocks_h   = ceill(image->infoheader.height / (float) block_d);
+    const long long nblocks_w = ceill(image->infoheader.width / (float) block_d);
+    const long long nblocks_h = ceill(image->infoheader.height / (float) block_d);
 
     // we have to compute the average R, G & B values for all pixels inside each pixel blocks and use the average to represent
     // that block as a wchar_t. one wchar_t in our buffer will have to represent (block_w x block_h) number of RGBQUADs
-    const long long nwchars     = nblocks_h * (nblocks_w + 2) + 1; // saving two wide chars for CRLF!, the +1 is for the NULL terminator
+    const long long nwchars   = nblocks_h * (nblocks_w + 2) + 1; // saving two wide chars for CRLF!, the +1 is for the NULL terminator
 
-    char* const restrict buffer = malloc(nwchars);
+    char* const buffer        = malloc(nwchars);
     if (!buffer) {
         fprintf(stderr, "Error in %s @ line %d: malloc failed!\n", __FUNCTION__, __LINE__);
         return NULL;
@@ -235,7 +235,7 @@ static inline char* to_downscaled_string(const bitmap* const restrict image) {
 }
 
 // an image width dependent dispatcher for to_raw_string and to_downscaled_string, that actually do the heavy lifting
-static inline char* to_string(const bitmap* const restrict image) {
+static inline char* to_string(const bitmap* const image) {
     if (image->infoheader.width <= CONSOLE_WIDTH) return to_raw_string(image);
     return to_downscaled_string(image);
 }

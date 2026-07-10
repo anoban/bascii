@@ -8,12 +8,12 @@
 // PREREQUISITES  all the scale factors must be within the range of 0 and 1 and the sum of all three of them should never go above 1.000
 // POTENTIAL HAZARD  access violations may happen when the above requisites are not met!
 static inline wchar_t tunable_mapper(
-    const rgbq* const restrict pixel,
-    const float bscale, // scaling factor for blue
-    const float gscale, // scaling factor for green
-    const float rscale, // scaling factor for red
-    const wchar_t* const restrict palette,
-    const unsigned plength
+    const rgbq* const    pixel,
+    const float          bscale, // scaling factor for blue
+    const float          gscale, // scaling factor for green
+    const float          rscale, // scaling factor for red
+    const wchar_t* const palette,
+    const unsigned       plength
 ) {
     assert(bscale >= 0.000);
     assert(gscale >= 0.000);
@@ -29,16 +29,16 @@ static inline wchar_t tunable_mapper(
 // PREREQUISITES  penalty must be a float in between [0.0, 1.0] (an inclusive range)
 // if you don't want a certain colour to be considered for penalization, specify both limits for that colour as UCHAR_MAX (or any identical values)
 static __attribute__((always_inline)) wchar_t penalizing_arithmeticmapper(
-    const rgbq* const restrict pixel,
-    const unsigned char bllim, // lower limit for blue pixels
-    const unsigned char bulim, // upper limit for blue pixels
-    const unsigned char gllim,
-    const unsigned char gulim,
-    const unsigned char rllim,
-    const unsigned char rulim,
-    const wchar_t* const restrict palette,
-    const unsigned plength,
-    const float    penalty
+    const rgbq* const    pixel,
+    const unsigned char  bllim, // lower limit for blue pixels
+    const unsigned char  bulim, // upper limit for blue pixels
+    const unsigned char  gllim,
+    const unsigned char  gulim,
+    const unsigned char  rllim,
+    const unsigned char  rulim,
+    const wchar_t* const palette,
+    const unsigned       plength,
+    const float          penalty
 ) {
     // this mapper is incredibly expensive compared to the alternatives and hence using this with a 0.000 penalty will be ridiculous!
     // because you'll be paying dearly for something you do not need!
@@ -55,16 +55,16 @@ static __attribute__((always_inline)) wchar_t penalizing_arithmeticmapper(
 }
 
 static __attribute__((always_inline)) wchar_t penalizing_weightedmapper(
-    const rgbq* const restrict pixel,
-    const unsigned char bllim,
-    const unsigned char bulim,
-    const unsigned char gllim,
-    const unsigned char gulim,
-    const unsigned char rllim,
-    const unsigned char rulim,
-    const wchar_t* const restrict palette,
-    const unsigned plength,
-    const float    penalty
+    const rgbq* const    pixel,
+    const unsigned char  bllim,
+    const unsigned char  bulim,
+    const unsigned char  gllim,
+    const unsigned char  gulim,
+    const unsigned char  rllim,
+    const unsigned char  rulim,
+    const wchar_t* const palette,
+    const unsigned       plength,
+    const float          penalty
 ) {
     assert(penalty >= 0.00000 && penalty <= ONE);
     const bool penalize = (((bllim != bulim) && (pixel->rgbBlue >= bllim) && (pixel->rgbBlue <= bulim)) ||
@@ -77,16 +77,16 @@ static __attribute__((always_inline)) wchar_t penalizing_weightedmapper(
 }
 
 static __attribute__((always_inline)) wchar_t penalizing_minmaxmapper(
-    const rgbq* const restrict pixel,
-    const unsigned char bllim,
-    const unsigned char bulim,
-    const unsigned char gllim,
-    const unsigned char gulim,
-    const unsigned char rllim,
-    const unsigned char rulim,
-    const wchar_t* const restrict palette,
-    const unsigned plength,
-    const float    penalty
+    const rgbq* const    pixel,
+    const unsigned char  bllim,
+    const unsigned char  bulim,
+    const unsigned char  gllim,
+    const unsigned char  gulim,
+    const unsigned char  rllim,
+    const unsigned char  rulim,
+    const wchar_t* const palette,
+    const unsigned       plength,
+    const float          penalty
 ) {
     assert(penalty >= 0.00000 && penalty <= ONE);
     const bool penalize   = (((bllim != bulim) && (pixel->rgbBlue >= bllim) && (pixel->rgbBlue <= bulim)) ||
@@ -100,16 +100,16 @@ static __attribute__((always_inline)) wchar_t penalizing_minmaxmapper(
 }
 
 static __attribute__((always_inline)) wchar_t penalizing_luminositymapper(
-    const rgbq* const restrict pixel,
-    const unsigned char bllim,
-    const unsigned char bulim,
-    const unsigned char gllim,
-    const unsigned char gulim,
-    const unsigned char rllim,
-    const unsigned char rulim,
-    const wchar_t* const restrict palette,
-    const unsigned plength,
-    const float    penalty
+    const rgbq* const    pixel,
+    const unsigned char  bllim,
+    const unsigned char  bulim,
+    const unsigned char  gllim,
+    const unsigned char  gulim,
+    const unsigned char  rllim,
+    const unsigned char  rulim,
+    const wchar_t* const palette,
+    const unsigned       plength,
+    const float          penalty
 ) {
     assert(penalty >= 0.00000 && penalty <= ONE);
     const bool penalize = (((bllim != bulim) && (pixel->rgbBlue >= bllim) && (pixel->rgbBlue <= bulim)) ||
@@ -122,14 +122,14 @@ static __attribute__((always_inline)) wchar_t penalizing_luminositymapper(
 }
 
 static inline wchar_t tunable_blockmapper(
-    const float rgbBlue,
-    const float bscale,
-    const float rgbGreen,
-    const float gscale,
-    const float rgbRed,
-    const float rscale,
-    const wchar_t* const restrict palette,
-    const unsigned plength
+    const float          rgbBlue,
+    const float          bscale,
+    const float          rgbGreen,
+    const float          gscale,
+    const float          rgbRed,
+    const float          rscale,
+    const wchar_t* const palette,
+    const unsigned       plength
 ) {
     assert(bscale >= 0.000);
     assert(gscale >= 0.000);
@@ -142,18 +142,18 @@ static inline wchar_t tunable_blockmapper(
 }
 
 static __attribute__((always_inline)) wchar_t penalizing_arithmeticblockmapper(
-    const float rgbBlue,
-    const float rgbGreen,
-    const float rgbRed,
-    const float bllim,
-    const float bulim,
-    const float gllim,
-    const float gulim,
-    const float rllim,
-    const float rulim,
-    const wchar_t* const restrict palette,
-    const unsigned plength,
-    const float    penalty
+    const float          rgbBlue,
+    const float          rgbGreen,
+    const float          rgbRed,
+    const float          bllim,
+    const float          bulim,
+    const float          gllim,
+    const float          gulim,
+    const float          rllim,
+    const float          rulim,
+    const wchar_t* const palette,
+    const unsigned       plength,
+    const float          penalty
 ) {
     // this mapper is incredibly expensive compared to the alternatives and hence using this with a 0.000 penalty will be ridiculous!
     // because you'll be paying dearly for something you do not need!
@@ -170,18 +170,18 @@ static __attribute__((always_inline)) wchar_t penalizing_arithmeticblockmapper(
 }
 
 static __attribute__((always_inline)) wchar_t penalizing_weightedblockmapper(
-    const float rgbBlue,
-    const float rgbGreen,
-    const float rgbRed,
-    const float bllim,
-    const float bulim,
-    const float gllim,
-    const float gulim,
-    const float rllim,
-    const float rulim,
-    const wchar_t* const restrict palette,
-    const unsigned plength,
-    const float    penalty
+    const float          rgbBlue,
+    const float          rgbGreen,
+    const float          rgbRed,
+    const float          bllim,
+    const float          bulim,
+    const float          gllim,
+    const float          gulim,
+    const float          rllim,
+    const float          rulim,
+    const wchar_t* const palette,
+    const unsigned       plength,
+    const float          penalty
 ) {
     assert(penalty >= 0.00000 && penalty <= ONE);
     const bool penalize   = (((bllim != bulim) && (rgbBlue >= bllim) && (rgbBlue <= bulim)) ||
@@ -193,18 +193,18 @@ static __attribute__((always_inline)) wchar_t penalizing_weightedblockmapper(
 }
 
 static __attribute__((always_inline)) wchar_t penalizing_minmaxblockmapper(
-    const float rgbBlue,
-    const float rgbGreen,
-    const float rgbRed,
-    const float bllim,
-    const float bulim,
-    const float gllim,
-    const float gulim,
-    const float rllim,
-    const float rulim,
-    const wchar_t* const restrict palette,
-    const unsigned plength,
-    const float    penalty
+    const float          rgbBlue,
+    const float          rgbGreen,
+    const float          rgbRed,
+    const float          bllim,
+    const float          bulim,
+    const float          gllim,
+    const float          gulim,
+    const float          rllim,
+    const float          rulim,
+    const wchar_t* const palette,
+    const unsigned       plength,
+    const float          penalty
 ) {
     assert(penalty >= 0.00000 && penalty <= ONE);
     const bool penalize = (((bllim != bulim) && (rgbBlue >= bllim) && (rgbBlue <= bulim)) ||
@@ -217,18 +217,18 @@ static __attribute__((always_inline)) wchar_t penalizing_minmaxblockmapper(
 }
 
 static __attribute__((always_inline)) wchar_t penalizing_luminosityblockmapper(
-    const float rgbBlue,
-    const float rgbGreen,
-    const float rgbRed,
-    const float bllim,
-    const float bulim,
-    const float gllim,
-    const float gulim,
-    const float rllim,
-    const float rulim,
-    const wchar_t* const restrict palette,
-    const unsigned plength,
-    const float    penalty
+    const float          rgbBlue,
+    const float          rgbGreen,
+    const float          rgbRed,
+    const float          bllim,
+    const float          bulim,
+    const float          gllim,
+    const float          gulim,
+    const float          rllim,
+    const float          rulim,
+    const wchar_t* const palette,
+    const unsigned       plength,
+    const float          penalty
 ) {
     assert(penalty >= 0.00000 && penalty <= ONE);
     const bool penalize   = (((bllim != bulim) && (rgbBlue >= bllim) && (rgbBlue <= bulim)) ||

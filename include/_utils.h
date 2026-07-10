@@ -38,24 +38,22 @@ static const char palette_extended[] = { ' ', '.', '\'', '`', '^', '"', ',', ':'
                                          'd', 'b', 'k',  'h', 'a', 'o', '*', '#', 'M', 'W',  '&',  '8', '%', 'B', '@', '$' };
 
 // arithmetic average of an RGB pixel values
-static inline unsigned arithmetic(const rgbq* const restrict pixel) {
+static inline unsigned arithmetic(const rgbq* const pixel) {
     // we don't want overflows or truncations here
     return (unsigned) ((((double) pixel->b) + pixel->g + pixel->r) / 3.000);
 }
 
 // weighted average of an RGB pixel values
-static inline unsigned weighted(const rgbq* const restrict pixel) {
-    return (unsigned) (pixel->b * 0.299 + pixel->g * 0.587 + pixel->r * 0.114);
-}
+static inline unsigned weighted(const rgbq* const pixel) { return (unsigned) (pixel->b * 0.299 + pixel->g * 0.587 + pixel->r * 0.114); }
 
 // average of minimum and maximum RGB values in a pixel
-static inline unsigned minmax(const rgbq* const restrict pixel) {
+static inline unsigned minmax(const rgbq* const pixel) {
     // we don't want overflows or truncations here
     return (unsigned) (((fmin(fmin(pixel->b, pixel->g), pixel->r)) + fmax(fmax(pixel->b, pixel->g), pixel->r)) / 2.0000);
 }
 
 // luminosity of an RGB pixel
-static inline unsigned luminosity(const rgbq* const restrict pixel) {
+static inline unsigned luminosity(const rgbq* const pixel) {
     return (unsigned) (pixel->b * 0.2126 + pixel->g * 0.7152 + pixel->r * 0.0722);
 }
 
@@ -82,29 +80,29 @@ static inline unsigned luminosity(const rgbq* const restrict pixel) {
 // taking it for granted that the input will never be a negative value,
 static inline unsigned nudge(const float _value) { return _value < 1.000000 ? 1 : (unsigned) _value; }
 
-static inline wchar_t arithmetic_mapper(const rgbq* const restrict pixel, const wchar_t* const restrict palette, const unsigned plength) {
+static inline wchar_t arithmetic_mapper(const rgbq* const pixel, const wchar_t* const palette, const unsigned plength) {
     const unsigned offset = (((float) (pixel->b)) + pixel->g + pixel->r) / 3.000; // can range from 0 to 255
     // hence, offset / (float)(UCHAR_MAX) can range from 0.0 to 1.0
     return palette[offset ? nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
 }
 
-static inline wchar_t weighted_mapper(const rgbq* const restrict pixel, const wchar_t* const restrict palette, const unsigned plength) {
+static inline wchar_t weighted_mapper(const rgbq* const pixel, const wchar_t* const palette, const unsigned plength) {
     const unsigned offset = pixel->b * 0.299 + pixel->g * 0.587 + pixel->r * 0.114;
     return palette[offset ? nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
 }
 
-static inline wchar_t minmax_mapper(const rgbq* const restrict pixel, const wchar_t* const restrict palette, const unsigned plength) {
+static inline wchar_t minmax_mapper(const rgbq* const pixel, const wchar_t* const palette, const unsigned plength) {
     const unsigned offset = (unsigned) ((fmin(fmin(pixel->b, pixel->g), pixel->r) + fmax(fmax(pixel->b, pixel->g), pixel->r)) / 2.0000);
     return palette[offset ? nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
 }
 
-static inline wchar_t luminosity_mapper(const rgbq* const restrict pixel, const wchar_t* const restrict palette, const unsigned plength) {
+static inline wchar_t luminosity_mapper(const rgbq* const pixel, const wchar_t* const palette, const unsigned plength) {
     const unsigned offset = pixel->b * 0.2126 + pixel->g * 0.7152 + pixel->r * 0.0722;
     return palette[offset ? nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
 }
 
 static inline wchar_t arithmetic_blockmapper(
-    const float rgbBlue, const float rgbGreen, const float rgbRed, const wchar_t* const restrict palette, const unsigned plength
+    const float rgbBlue, const float rgbGreen, const float rgbRed, const wchar_t* const palette, const unsigned plength
 ) {
     const unsigned offset = (rgbBlue + rgbGreen + rgbRed) / 3.000; // can range from 0 to 255
     // hence, offset / (float)(UCHAR_MAX) can range from 0.0 to 1.0
@@ -112,21 +110,21 @@ static inline wchar_t arithmetic_blockmapper(
 }
 
 static inline wchar_t weighted_blockmapper(
-    const float rgbBlue, const float rgbGreen, const float rgbRed, const wchar_t* const restrict palette, const unsigned plength
+    const float rgbBlue, const float rgbGreen, const float rgbRed, const wchar_t* const palette, const unsigned plength
 ) {
     const unsigned offset = rgbBlue * 0.299 + rgbGreen * 0.587 + rgbRed * 0.114;
     return palette[offset ? nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
 }
 
 static inline wchar_t minmax_blockmapper(
-    const float rgbBlue, const float rgbGreen, const float rgbRed, const wchar_t* const restrict palette, const unsigned plength
+    const float rgbBlue, const float rgbGreen, const float rgbRed, const wchar_t* const palette, const unsigned plength
 ) {
     const unsigned offset = (fmin(fmin(rgbBlue, rgbGreen), rgbRed) + fmax(fmax(rgbBlue, rgbGreen), rgbRed)) / 2.0000;
     return palette[offset ? nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
 }
 
 static inline wchar_t luminosity_blockmapper(
-    const float rgbBlue, const float rgbGreen, const float rgbRed, const wchar_t* const restrict palette, const unsigned plength
+    const float rgbBlue, const float rgbGreen, const float rgbRed, const wchar_t* const palette, const unsigned plength
 ) {
     const unsigned offset = rgbBlue * 0.2126 + rgbGreen * 0.7152 + rgbRed * 0.0722;
     return palette[offset ? nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];

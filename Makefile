@@ -13,10 +13,10 @@ CPPFLAGS = -Wall -Wextra -std=c++20 -march=tigerlake -mavx512f -ffast-math -mpre
 INCLUDE_DIRS = -I./include/
 
 build:
-	$(CC) $(INCLUDE_DIRS) ./src/main.c $(CFLAGS) $(NODEBUG) -o bmpasc.out
+	$(CC) $(INCLUDE_DIRS) ./main.c $(CFLAGS) $(NODEBUG) -o bmpasc.out
 
 test:
-	$(CPP) $(INCLUDE_DIRS) ./src/test.c $(CFLAGS) -D__TEST__ $(NODEBUG) -o test.out
+	$(CPP) $(INCLUDE_DIRS) ./tests/main.cpp $(CFLAGS) -D__TEST__ $(NODEBUG) -o test.out
 
 clean:
 	rm -f ./*.out

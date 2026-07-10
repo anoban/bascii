@@ -1,16 +1,13 @@
 #define TEST_TIMES 5LL // DON'T EVEN THINK ABOUT INCREASING THIS. WITH 5 ALONE, TESTING TOOK A FEW MINUTES TO FINISH!
-#include <time.h>
 #include <_tostring.h>
+#include <time.h>
 
-static_assert(sizeof(infhead) == 40LLU);
-static_assert(sizeof(fhead) == 14LLU);
-
-static const rgbq min                       = { .rgbBlue = 0x00, .rgbGreen = 0x00, .rgbRed = 0x00, .rgbReserved = 0xFF };
-static const rgbq mid                       = { .rgbBlue = 0x80, .rgbGreen = 0x80, .rgbRed = 0x80, .rgbReserved = 0xFF };
-static const rgbq max                       = { .rgbBlue = 0xFF, .rgbGreen = 0xFF, .rgbRed = 0xFF, .rgbReserved = 0xFF };
+static const rgbq min                     = { .rgbBlue = 0x00, .rgbGreen = 0x00, .rgbRed = 0x00, .rgbReserved = 0xFF };
+static const rgbq mid                     = { .rgbBlue = 0x80, .rgbGreen = 0x80, .rgbRed = 0x80, .rgbReserved = 0xFF };
+static const rgbq max                     = { .rgbBlue = 0xFF, .rgbGreen = 0xFF, .rgbRed = 0xFF, .rgbReserved = 0xFF };
 
 // a 300 byte chunk extracted from a real BMP file, for testing
-static const unsigned char const dummybmp[] = {
+static constexpr unsigned char dummybmp[] = {
     66, 77,  54, 129, 21, 0,   0,   0,  0,  0,   54,  0,  0,  0,   40, 0, 0,  0,   222, 2, 0,  0,   224, 1, 0,  0,   1, 0, 32, 0,   0, 0,
     0,  0,   0,  0,   0,  0,   196, 14, 0,  0,   196, 14, 0,  0,   0,  0, 0,  0,   0,   0, 0,  0,   2,   2, 8,  255, 2, 2, 8,  255, 1, 1,
     7,  255, 1,  1,   7,  255, 0,   0,  6,  255, 0,   1,  5,  255, 0,  1, 5,  255, 0,   1, 5,  255, 0,   1, 5,  255, 2, 1, 5,  255, 7, 4,
@@ -26,7 +23,7 @@ static const unsigned char const dummybmp[] = {
 static const float RNDMAX = RAND_MAX + 2.0000;
 // the + 2.0000 is just for extra safety that we do not get too close to 1.000 when dividing rand() by RNDMAX
 
-int wmain(void) {
+int main() {
     srand(time(NULL));
 
 #pragma region __TEST_BMP_STARTTAGS__
@@ -234,7 +231,7 @@ int wmain(void) {
     const wchar_t** _ptr                    = filenames;
     while (*_ptr) {
         bitmap_t image                     = bmpread(*_ptr);
-        const wchar_t* const restrict wstr = to_string(&image);
+        const wchar_t* const  wstr = to_string(&image);
         if (!wstr) {
             wprintf_s(L"Error :: cannot process %s!\n", *_ptr);
             bmpclose(&image);

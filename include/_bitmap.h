@@ -69,7 +69,7 @@ typedef enum { RGB, RLE8, RLE4, BITFIELDS, UNKNOWN } BITMAP_COMPRESSION_KIND;
 
 static const unsigned short START_TAG_LE = L'M' << 8 | L'B';
 
-static inline fhead fileheader(const unsigned char* const restrict buffer, const unsigned size) {
+static inline fhead fileheader(const unsigned char* const buffer, const unsigned size) {
     fhead header = { 0 };
 
     if ((size < sizeof(fhead)) || !buffer) { // if the buffer is NULL or it's smaller than the size of the file header

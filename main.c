@@ -21,6 +21,7 @@ int main(const int argc, char* argv[]) {
 
         puts(repr);
         puts("\n\n");
+
         free(repr);
         bmpclose(&image);
     }
