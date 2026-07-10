@@ -18,14 +18,14 @@
 // IF NEED BE, THE PALETTE EXPANDED FROM spalette COULD BE REPLACED BY A REAL PALETTE NAME
 
 static inline char* to_raw_string(const bitmap* const restrict image) {
-    if (image->_infoheader.height < 0) {
+    if (image->infoheader.height < 0) {
         fputs("Error in to_raw_string, this tool does not support bitmaps with top-down pixel ordering!\n", stderr);
         return NULL;
     }
 
-    const long long npixels = (long long) image->_infoheader.height * image->_infoheader.width; // total pixels in the image
+    const long long npixels = (long long) image->infoheader.height * image->infoheader.width; // total pixels in the image
     const long long nchars /* 1 wchar_t for each pixel + 1 additional character for LF ('\n') at the end of each scanline */ =
-        npixels + 1LL * image->_infoheader.height;
+        npixels + 1LL * image->infoheader.height;
 
     char* const restrict buffer = malloc(nchars + 1); // and the +1 is for the NULL terminator
     if (!buffer) {
@@ -44,10 +44,10 @@ static inline char* to_raw_string(const bitmap* const restrict image) {
     long long caret = 0;
     // presuming pixels are ordered bottom up, start the traversal from the last pixel and move up.
     // traverse up along the height, for each row, starting with the last row,
-    for (long long nrows = image->_infoheader.height - 1LL; nrows >= 0; --nrows) {
+    for (long long nrows = image->infoheader.height - 1LL; nrows >= 0; --nrows) {
         // traverse left to right inside "scan lines"
-        for (long long ncols = 0; ncols < image->_infoheader.width; ++ncols) // for each pixel in the row,
-            buffer[caret++] = map(&image->_pixels[nrows * image->_infoheader.width + ncols]);
+        for (long long ncols = 0; ncols < image->infoheader.width; ++ncols) // for each pixel in the row,
+            buffer[caret++] = map(&image->pixels[nrows * image->infoheader.width + ncols]);
         // at the end of each scanline, append a CRLF!
         buffer[caret++] = L'\n';
         // buffer[caret++] = L'\r';
@@ -63,29 +63,29 @@ static inline char* to_raw_string(const bitmap* const restrict image) {
 // downscaling is completely predicated only on the image width, and the proportionate scaling factor will be used to scale down the image vertically too.
 // downscaling needs to be done in square pixel blocks which will be represented by a single wchar_t
 static inline char* to_downscaled_string(const bitmap* const restrict image) {
-    if (image->_infoheader.height < 0) {
+    if (image->infoheader.height < 0) {
         fputs("Error in to_downscaled_string, this tool does not support bitmaps with top-down pixel ordering!\n", stderr);
         return NULL;
     }
 
-    const long long block_d /* dimension of an individual square block */ = ceill(image->_infoheader.width / CONSOLE_WIDTHR);
+    const long long block_d /* dimension of an individual square block */ = ceill(image->infoheader.width / CONSOLE_WIDTHR);
 
     const float blocksize /* number of pixels in a block */               = block_d * block_d; // since our blocks are square
 
     long long pblocksize_right = // number of pixels in each block in the rightmost column of incomplete blocks.
         // width of the image - (number of complete blocks * block dimension) will give the residual pixels along the horizontal axis
         // multiply that by block domension again, and we'll get the number of pixels in the incomplete block
-        (image->_infoheader.width -
-         (image->_infoheader.width / block_d) /* deliberate integer division to get only the count of complete blocks */ * block_d) *
+        (image->infoheader.width -
+         (image->infoheader.width / block_d) /* deliberate integer division to get only the count of complete blocks */ * block_d) *
         block_d;
     assert(pblocksize_right < blocksize);
 
     // the block size to represent the number of pixels held by the last row blocks
-    long long pblocksize_bottom = (image->_infoheader.height - (image->_infoheader.height / block_d) * block_d) * block_d;
+    long long pblocksize_bottom = (image->infoheader.height - (image->infoheader.height / block_d) * block_d) * block_d;
     assert(pblocksize_bottom < blocksize);
 
-    const long long nblocks_w   = ceill(image->_infoheader.width / (float) block_d);
-    const long long nblocks_h   = ceill(image->_infoheader.height / (float) block_d);
+    const long long nblocks_w   = ceill(image->infoheader.width / (float) block_d);
+    const long long nblocks_h   = ceill(image->infoheader.height / (float) block_d);
 
     // we have to compute the average R, G & B values for all pixels inside each pixel blocks and use the average to represent
     // that block as a wchar_t. one wchar_t in our buffer will have to represent (block_w x block_h) number of RGBQUADs
@@ -101,9 +101,9 @@ static inline char* to_downscaled_string(const bitmap* const restrict image) {
     float blockavg_blue = 0.0F, blockavg_green = 0.0F, blockavg_red = 0.0F; // per block averages of the rgbBlue, rgbGreen and rgbRed values
     long long  caret = 0, offset = 0, col = 0, row = 0;
     const bool block_rows_end_with_incomplete_blocks =
-        image->_infoheader.width % CONSOLE_WIDTH; // true if the image width is not divisible by 140 without remainders
+        image->infoheader.width % CONSOLE_WIDTH; // true if the image width is not divisible by 140 without remainders
     const bool block_columns_end_with_incomplete_blocks =
-        image->_infoheader.height % block_d; // true if the image height is not divisible by block_d without remainders
+        image->infoheader.height % block_d; // true if the image height is not divisible by block_d without remainders
     // NOLINTEND(readability-isolate-declaration)
 
     __printf_debug("Width :: %6ld, Height :: %6ld\n", image->_infoheader.biWidth, image->_infoheader.biHeight);
@@ -125,17 +125,17 @@ static inline char* to_downscaled_string(const bitmap* const restrict image) {
 
     // row = image->_infoheader.biHeight will get us to the last pixel of the first (last in the buffer) scanline with (r * image->_infoheader.biWidth)
     // hence, row = image->_infoheader.biHeight - 1 so we can traverse pixels in the first scanline with (r * image->_infoheader.biWidth) + c
-    for (row = image->_infoheader.height - 1; row >= (block_d - 1); row -= block_d) { // start the traversal at the bottom most scan line
-                                                                                      // wprintf_s(L"row = %lld\n", row);
-        for (col = 0; col <= image->_infoheader.width - block_d; col += block_d) {    // traverse left to right in scan lines
+    for (row = image->infoheader.height - 1; row >= (block_d - 1); row -= block_d) { // start the traversal at the bottom most scan line
+                                                                                     // wprintf_s(L"row = %lld\n", row);
+        for (col = 0; col <= image->infoheader.width - block_d; col += block_d) {    // traverse left to right in scan lines
             // wprintf_s(L"row = %lld, col = %lld\n", row, col);
 
             for (long long r = row; r > row - block_d; --r) { // deal with blocks
                 for (long long c = col; c < col + block_d; ++c) {
-                    offset          = (r * image->_infoheader.width) + c;
-                    blockavg_blue  += image->_pixels[offset].b;
-                    blockavg_green += image->_pixels[offset].g;
-                    blockavg_red   += image->_pixels[offset].r;
+                    offset          = (r * image->infoheader.width) + c;
+                    blockavg_blue  += image->pixels[offset].b;
+                    blockavg_green += image->pixels[offset].g;
+                    blockavg_red   += image->pixels[offset].r;
 
                     __debug(count++);
                 }
@@ -159,11 +159,11 @@ static inline char* to_downscaled_string(const bitmap* const restrict image) {
 
             for (long long r = row; r > row - block_d; --r) {
                 // shift the column delimiter backward by one block, to the end of the last complete block
-                for (long long c = col; c < image->_infoheader.width; ++c) { // start from the end of the last complete block
-                    offset          = (r * image->_infoheader.width) + c;
-                    blockavg_blue  += image->_pixels[offset].b;
-                    blockavg_green += image->_pixels[offset].g;
-                    blockavg_red   += image->_pixels[offset].r;
+                for (long long c = col; c < image->infoheader.width; ++c) { // start from the end of the last complete block
+                    offset          = (r * image->infoheader.width) + c;
+                    blockavg_blue  += image->pixels[offset].b;
+                    blockavg_green += image->pixels[offset].g;
+                    blockavg_red   += image->pixels[offset].r;
 
                     __debug(count++);
                 }
@@ -194,14 +194,14 @@ static inline char* to_downscaled_string(const bitmap* const restrict image) {
 
     if (block_columns_end_with_incomplete_blocks) { // process the last incomplete row of pixel blocks here,
 
-        for (col = 0; col < image->_infoheader.width; col += block_d) { // col must be 0 at the start of this loop
+        for (col = 0; col < image->infoheader.width; col += block_d) { // col must be 0 at the start of this loop
 
             for (long long r = row; r >= 0; --r) {                // r delimits the start row of the block being defined
                 for (long long c = col; c < col + block_d; ++c) { // c delimits the start column of the block being defined
-                    offset          = (r * image->_infoheader.width) + c;
-                    blockavg_blue  += image->_pixels[offset].b;
-                    blockavg_green += image->_pixels[offset].g;
-                    blockavg_red   += image->_pixels[offset].r;
+                    offset          = (r * image->infoheader.width) + c;
+                    blockavg_blue  += image->pixels[offset].b;
+                    blockavg_green += image->pixels[offset].g;
+                    blockavg_red   += image->pixels[offset].r;
                 }
             }
 
@@ -236,6 +236,6 @@ static inline char* to_downscaled_string(const bitmap* const restrict image) {
 
 // an image width dependent dispatcher for to_raw_string and to_downscaled_string, that actually do the heavy lifting
 static inline char* to_string(const bitmap* const restrict image) {
-    if (image->_infoheader.width <= CONSOLE_WIDTH) return to_raw_string(image);
+    if (image->infoheader.width <= CONSOLE_WIDTH) return to_raw_string(image);
     return to_downscaled_string(image);
 }
