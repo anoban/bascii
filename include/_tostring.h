@@ -169,7 +169,7 @@ static inline char* to_downscaled_string(
     // true if the image height is not divisible by block_d without remainders
     const bool vincomplete = image->infoheader.height % block_dim;
 
-#if defined(__VERBOSE_OUTPUTS)
+#ifdef __VERBOSE_OUTPUTS
     fprintf(stderr, "Width - %d, Height - %d\n", image->infoheader.width, image->infoheader.height);
     fprintf(stderr, "Size of the square block - %lld\n", block_dim);
 
@@ -183,12 +183,11 @@ static inline char* to_downscaled_string(
 
     long long nbfull = 0, nbincomplete = 0, count = 0; // number of full, incomplete blocks mapped to characters
 
-    // row = image->_infoheader.biHeight will get us to the last pixel of the first (last in the buffer) scanline with (r * image->_infoheader.biWidth)
-    // hence, row = image->_infoheader.biHeight - 1 so we can traverse pixels in the first scanline with (r * image->_infoheader.biWidth) + c
+    // row = image->infoheader.height will get us to the last pixel of the first (last in the buffer) scanline with (r * image->infoheader.width)
+    // hence, row = image->infoheader.height - 1 so we can traverse pixels in the first scanline with (r * image->infoheader.width) + c
     for (row = image->infoheader.height - 1; row >= (block_dim - 1); row -= block_dim) { // start the traversal at the bottom most scan line
-                                                                                         // wprintf_s(L"row = %lld\n", row);
-        for (col = 0; col <= image->infoheader.width - block_dim; col += block_dim) {    // traverse left to right in scan lines
-            // wprintf_s(L"row = %lld, col = %lld\n", row, col);
+
+        for (col = 0; col <= image->infoheader.width - block_dim; col += block_dim) { // traverse left to right in scan lines
 
             for (long long r = row; r > row - block_dim; --r) { // deal with blocks
                 for (long long c = col; c < col + block_dim; ++c) {
@@ -244,12 +243,11 @@ static inline char* to_downscaled_string(
         }
 
         buffer[caret++] = L'\n';
-        // buffer[caret++] = L'\r';
     }
 
-#if defined(__VERBOSE_OUTPUTS)
+#ifdef __VERBOSE_OUTPUTS
     fprintf(stderr, "%llu complete blocks have been processed!\n", nbfull);
-    fprintf(stderr, "%llu incomplete blocks at the right edge have been processed\n", nbincomplete);
+    fprintf(stderr, "%llu incomplete blocks at the right have been processed\n", nbincomplete);
 #endif
 
     assert(row < block_dim);
@@ -274,24 +272,20 @@ static inline char* to_downscaled_string(
 
             _verbose(nbincomplete++);
 
-            // if (!(blockavg_blue <= 255.00 && blockavg_green <= 255.00 && blockavg_red <= 255.00))
-            //     wprintf_s(L"Average (BGR) = (%.4f, %.4f, %.4f)\n", blockavg_blue, blockavg_green, blockavg_red);
-
             assert(avgb <= 255.00 && avgg <= 255.00 && avgr <= 255.00);
             buffer[caret++] = mapper(avgb, avgg, avgr, palette, psize);
             avgb = avgg = avgr = 0.000; // reset the block averages
         }
 
         buffer[caret++] = '\n';
-        // buffer[caret++] = '\r';
     }
 
     buffer[caret++] = 0; // using the last byte as null terminator
 
     // now caret == nchars, so an attempt to write at caret will now raise an access violation exception or a heap corruption error
-#if defined(__VERBOSE_OUTPUTS)
+#ifdef __VERBOSE_OUTPUTS
     fprintf(stderr, "%llu incomplete blocks at the bottom have been processed\n", nbincomplete);
-    fprintf(stderr, "caret - %lld, nwchars - %lld\n", caret, nchars);
+    fprintf(stderr, "caret - %lld, nchars - %lld\n", caret, nchars);
 #endif
 
     assert(caret == nchars);
