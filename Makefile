@@ -14,11 +14,13 @@ INCLUDE_DIRS = -I./include/
 
 TEST_INCLUDE_DIRS = $(INCLUDE_DIRS) I./tests/googletest/ -I./tests/googletest/include/
 
+GTEST_ALL = ./tests/googletest/src/gtest-all.cc
+
 build:
-	$(CC) $(INCLUDE_DIRS) ./main.c $(CFLAGS) $(NODEBUG) -o bmpasc.out
+	$(CC) $(INCLUDE_DIRS) ./main.c $(CFLAGS) $(NODEBUG) -o bascii.out
 
 test:
-	$(CPP) $(INCLUDE_DIRS) ./tests/main.cpp $(CFLAGS) -D__TEST__ $(NODEBUG) -o test.out
+	$(CPP) $(INCLUDE_DIRS) ./tests/main.cpp $(GTEST_ALL) $(CPPFLAGS) -D__TEST__ $(NODEBUG) -o test.out
 
 clean:
 	rm -f ./*.out

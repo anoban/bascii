@@ -30,31 +30,6 @@ static const char palette_extended[] = { ' ', '.', '\'', '`', '^', '"', ',', ':'
                                          'u', 'v', 'c',  'z', 'X', 'Y', 'U', 'J', 'C', '\'', 'Q',  '0', 'O', 'Z', 'm', 'w', 'q', 'p',
                                          'd', 'b', 'k',  'h', 'a', 'o', '*', '#', 'M', 'W',  '&',  '8', '%', 'B', '@', '$' };
 
-//-------------------------------------
-// COLOUR VALUE AVERAGING FUNCTIONS
-//-------------------------------------
-
-// arithmetic average of an RGB pixel values
-static inline double __attribute__((always_inline)) arithmetic_avg(const rgbq* const pixel) {
-    return (((double) pixel->b) + pixel->g + pixel->r) / 3.000; // we don't want overflows or truncations here
-}
-
-// weighted average of an RGB pixel values
-static inline double __attribute__((always_inline)) weighted_avg(const rgbq* const pixel) {
-    return pixel->b * 0.299 + pixel->g * 0.587 + pixel->r * 0.114;
-}
-
-// average of minimum and maximum colour values in the pixel
-static inline double __attribute__((always_inline)) minmax_avg(const rgbq* const pixel) {
-    // we don't want overflows or truncations here
-    return ((fmin(fmin(pixel->b, pixel->g), pixel->r)) + fmax(fmax(pixel->b, pixel->g), pixel->r)) / 2.0000;
-}
-
-// luminosity of an RGB pixel
-static inline double __attribute__((always_inline)) luminosity_avg(const rgbq* const pixel) {
-    return pixel->b * 0.2126 + pixel->g * 0.7152 + pixel->r * 0.0722;
-}
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 // transformers that map an RGB pixel to a representative unicode character, using the provided palette //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -74,31 +49,39 @@ static inline double __attribute__((always_inline)) luminosity_avg(const rgbq* c
 // but ceil() will send a call to a ucrt dll every time we use the mapper in a loop, againt will make the performance phenomenally bad
 // we really do not need a ceilf() call, all we need is a function that can return 1.000 when the input is between 0.00000 and 1.0000
 
+//--------------------------------
+// PIXEL TO CHARACTER MAPPERS
+//--------------------------------
+
 static inline unsigned nudge(float _value) {
     // taking it for granted that the input will never be a negative value
     return _value < 1.000000 ? 1 : (unsigned) _value;
 }
 
-static inline char arithmetic_mapper(const rgbq* const pixel, const char* const palette, unsigned plength) {
-    const unsigned offset = arithmetic_avg(pixel); // can range from 0 to 255
+static inline char arithmetic(const rgbq* const pixel, const char* const palette, unsigned plength) {
+    const unsigned offset = ((double) pixel->b + pixel->g + pixel->r) / 3.000; // can range from 0 to 255
     // hence, offset / (float)(UCHAR_MAX) can range from 0.0 to 1.0
     return palette[offset ? nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
 }
 
-static inline char weighted_mapper(const rgbq* const pixel, const char* const palette, unsigned plength) {
+static inline char weighted(const rgbq* const pixel, const char* const palette, unsigned plength) {
     const unsigned offset = pixel->b * 0.299 + pixel->g * 0.587 + pixel->r * 0.114;
     return palette[offset ? nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
 }
 
-static inline char minmax_mapper(const rgbq* const pixel, const char* const palette, unsigned plength) {
+static inline char minmax(const rgbq* const pixel, const char* const palette, unsigned plength) {
     const unsigned offset = (unsigned) ((fmin(fmin(pixel->b, pixel->g), pixel->r) + fmax(fmax(pixel->b, pixel->g), pixel->r)) / 2.0000);
     return palette[offset ? nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
 }
 
-static inline char luminosity_mapper(const rgbq* const pixel, const char* const palette, unsigned plength) {
+static inline char luminosity(const rgbq* const pixel, const char* const palette, unsigned plength) {
     const unsigned offset = pixel->b * 0.2126 + pixel->g * 0.7152 + pixel->r * 0.0722;
     return palette[offset ? nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
 }
+
+//---------------------------------------
+// PIXEL BLOCKS TO CHARACTER MAPPERS
+//---------------------------------------
 
 static inline char arithmetic_blockmapper(float b, float g, float r, const char* const palette, unsigned plength) {
     const unsigned offset = (b + g + r) / 3.000; // can range from 0 to 255

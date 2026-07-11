@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stddef.h>
 
 // clang-format off
@@ -11,23 +12,13 @@
 //    PLACE FOR CUSTOMIZATIONS
 //----------------------------------
 
-#define CONSOLE_WIDTH     140
-#define CONSOLE_WIDTHR    ((double) (CONSOLE_WIDTH))
-
-#define character_palette palette_base                                                          // PICK ONE OF THE THREE AVALIABLE PALETTES
-#define map(_pixel)       weighted_mapper(_pixel, character_palette, sizeof(character_palette)) // CHOOSE A BASIC MAPPER OF YOUR LIKING
-#define blockmap(blue, green, red) weighted_blockmapper(blue, green, red, character_palette, sizeof(character_palette))
-
-// IT IS NOT OBLIGATORY FOR BOTH THE BASIC MAPPER AND THE BLOCK MAPPER TO USE THE SAME PALETTE
-// IF NEED BE, THE PALETTE EXPANDED FROM character_palette COULD BE REPLACED BY A REAL PALETTE NAME
+#define CONSOLE_WIDTH  140
+#define CONSOLE_WIDTHR ((double) (CONSOLE_WIDTH))
 
 //----------------------------------
 
 static inline char* to_raw_string(
-    const bitmap* const image,
-    char (*mapper)(const rgbq* const, const char* const, unsigned),
-    const char* const palette,
-    const unsigned    psize
+    const bitmap* const image, char (*mapper)(const rgbq* const, const char* const, unsigned), const char* const palette, unsigned psize
 ) {
     if (pixelorder(&image->infoheader) == TOPDOWN) {
         fprintf(
@@ -91,7 +82,9 @@ static inline char* to_raw_string(
     return buffer;
 }
 
-static inline char* to_downscaled_string(const bitmap* const image) {
+static inline char* to_downscaled_string(
+    const bitmap* const image, char (*mapper)(float, float, float, const char* const, unsigned), const char* const palette, unsigned psize
+) {
     // generate the character buffer after downscaling the image such that the ASCII representation will fit the terminal width (~142 chars)
     // downscaling is solely dependent on the image width, and a proportionate scaling factor will be used to downscale the image vertically too
     // downscaling needs to be done in square pixel blocks which will be represented by a single ASCII character
@@ -150,38 +143,41 @@ static inline char* to_downscaled_string(const bitmap* const image) {
         return NULL;
     }
 
-    const long long nblocks_w = ceill(image->infoheader.width / (float) block_d);
-    const long long nblocks_h = ceill(image->infoheader.height / (float) block_d);
+    // number of total blocks along rows (including incomplete blocks) - hence the round up with ceil()
+    const long long hblocks_total = ceil((double) image->infoheader.width / block_d);
+    // number of total blocks along columns (including incomplete blocks)
+    const long long vblocks_total = ceil((double) image->infoheader.height / block_d);
 
-    // we have to compute the average R, G & B values for all pixels inside each pixel blocks and use the average to represent
-    // that block as a wchar_t. one wchar_t in our buffer will have to represent (block_w x block_h) number of RGBQUADs
-    const long long nwchars   = nblocks_h * (nblocks_w + 2) + 1; // saving two wide chars for CRLF!, the +1 is for the NULL terminator
+    // we have to compute the average R, G & B values for all pixels inside each pixel block and use the average to represent that block as a character.
+    // one char in our buffer will have to represent (block_w x block_h) number of RGBQUADs
+    const long long nchars        = vblocks_total * (hblocks_total + 1) + 1; // saving one char for LF, the +1 is for the NULL terminator
 
-    char* const buffer        = malloc(nwchars);
+    char* const buffer            = malloc(nchars);
     if (!buffer) {
-        fprintf(stderr, "Error in %s @ line %d: malloc failed!\n", __FUNCTION__, __LINE__);
+        fprintf(stderr, "Error in function %s in file %s at line %d memory allocation failed!\n", __FUNCTION__, __FILE__, __LINE__);
         return NULL;
     }
 
-    // NOLINTBEGIN(readability-isolate-declaration)
-    float blockavg_blue = 0.0F, blockavg_green = 0.0F, blockavg_red = 0.0F; // per block averages of the rgbBlue, rgbGreen and rgbRed values
-    long long  caret = 0, offset = 0, col = 0, row = 0;
-    const bool block_rows_end_with_incomplete_blocks =
-        image->infoheader.width % CONSOLE_WIDTH; // true if the image width is not divisible by 140 without remainders
-    const bool block_columns_end_with_incomplete_blocks =
-        image->infoheader.height % block_d; // true if the image height is not divisible by block_d without remainders
-    // NOLINTEND(readability-isolate-declaration)
+    double    avgb = 0.0, avgg = 0.0, avgr = 0.0; // per block averages of the rgbBlue, rgbGreen and rgbRed values
+    long long caret = 0, offset = 0, col = 0, row = 0;
 
-    __printf_debug("Width :: %6ld, Height :: %6ld\n", image->_infoheader.biWidth, image->_infoheader.biHeight);
-    __printf_debug("Size of the square block :: %6lld\n", block_d);
-    __printf_debug("Number of blocks along the x axis :: %6lld\n", nblocks_w);
-    __printf_debug(
+    // true if the image width is not divisible by CONSOLE_WIDTH without remainders
+    const bool hblocks_incomplete = image->infoheader.width % CONSOLE_WIDTH;
+    // true if the image height is not divisible by block_d without remainders
+    const bool vblocks_incomplete = image->infoheader.height % block_d;
+
+    fprintf(stderr, "Width :: %d, Height :: %d\n", image->infoheader.width, image->infoheader.height);
+    fprintf(stderr, "Size of the square block :: %6lld\n", block_d);
+    fprintf(stderr, "Number of blocks along the x axis :: %6lld\n", hblocks_total);
+    fprintf(
+        stderr,
         "Dimension of the incomplete block along the x axis (w, h) :: (%3lld, %3lld)\n",
-        image->_infoheader.biWidth - (image->_infoheader.biWidth / block_d) * block_d,
-        nblocks_w
+        image->infoheader.width - (image->infoheader.width / block_d) * block_d,
+        hblocks_total
     );
-    __printf_debug("Number of blocks along the y axis :: %6lld\n", nblocks_h);
-    __printf_debug(
+    fprintf(stderr, "Number of blocks along the y axis :: %6lld\n", nblocks_h);
+    fprintf(
+        stderr,
         "Dimension of the incomplete block along the y axis (w, h) :: (%3lld, %3lld)\n",
         nblocks_w,
         image->_infoheader.biHeight - (image->_infoheader.biHeight / block_d) * block_d
@@ -198,10 +194,10 @@ static inline char* to_downscaled_string(const bitmap* const image) {
 
             for (long long r = row; r > row - block_d; --r) { // deal with blocks
                 for (long long c = col; c < col + block_d; ++c) {
-                    offset          = (r * image->infoheader.width) + c;
-                    blockavg_blue  += image->pixels[offset].b;
-                    blockavg_green += image->pixels[offset].g;
-                    blockavg_red   += image->pixels[offset].r;
+                    offset  = (r * image->infoheader.width) + c;
+                    avgb   += image->pixels[offset].b;
+                    avgg   += image->pixels[offset].g;
+                    avgr   += image->pixels[offset].r;
 
                     __debug(count++);
                 }
@@ -211,25 +207,25 @@ static inline char* to_downscaled_string(const bitmap* const image) {
             assert(count == block_d * block_d);
             __debug(count = 0);
 
-            blockavg_blue  /= blocksize;
-            blockavg_green /= blocksize;
-            blockavg_red   /= blocksize;
+            avgb /= blocksize;
+            avgg /= blocksize;
+            avgr /= blocksize;
 
-            assert(blockavg_blue <= 255.00 && blockavg_green <= 255.00 && blockavg_red <= 255.00);
+            assert(avgb <= 255.00 && avgg <= 255.00 && avgr <= 255.00);
 
-            buffer[caret++] = blockmap(blockavg_blue, blockavg_green, blockavg_red);
-            blockavg_blue = blockavg_green = blockavg_red = 0.000;
+            buffer[caret++] = mapper(avgb, avgg, avgr, palette, psize);
+            avgb = avgg = avgr = 0.000;
         }
 
-        if (block_rows_end_with_incomplete_blocks) { // if there are partially filled blocks at the end of this row of blocks,
+        if (hblocks_incomplete) { // if there are partially filled blocks at the end of this row of blocks,
 
             for (long long r = row; r > row - block_d; --r) {
                 // shift the column delimiter backward by one block, to the end of the last complete block
                 for (long long c = col; c < image->infoheader.width; ++c) { // start from the end of the last complete block
-                    offset          = (r * image->infoheader.width) + c;
-                    blockavg_blue  += image->pixels[offset].b;
-                    blockavg_green += image->pixels[offset].g;
-                    blockavg_red   += image->pixels[offset].r;
+                    offset  = (r * image->infoheader.width) + c;
+                    avgb   += image->pixels[offset].b;
+                    avgg   += image->pixels[offset].g;
+                    avgr   += image->pixels[offset].r;
 
                     __debug(count++);
                 }
@@ -239,14 +235,14 @@ static inline char* to_downscaled_string(const bitmap* const image) {
             assert(count == incomplete_blocksize_right); // fails
             __debug(count = 0);
 
-            blockavg_blue  /= incomplete_blocksize_right;
-            blockavg_green /= incomplete_blocksize_right;
-            blockavg_red   /= incomplete_blocksize_right;
+            avgb /= incomplete_blocksize_right;
+            avgg /= incomplete_blocksize_right;
+            avgr /= incomplete_blocksize_right;
 
-            assert(blockavg_blue <= 255.00 && blockavg_green <= 255.00 && blockavg_red <= 255.00);
+            assert(avgb <= 255.00 && avgg <= 255.00 && avgr <= 255.00);
 
-            buffer[caret++] = blockmap(blockavg_blue, blockavg_green, blockavg_red);
-            blockavg_blue = blockavg_green = blockavg_red = 0.000; // reset the block averages
+            buffer[caret++] = blockmap(avgb, avgg, avgr);
+            avgb = avgg = avgr = 0.000; // reset the block averages
         }
 
         buffer[caret++] = L'\n';
@@ -258,31 +254,31 @@ static inline char* to_downscaled_string(const bitmap* const image) {
     assert(row < block_d);
     __debug(incomplete = 0);
 
-    if (block_columns_end_with_incomplete_blocks) { // process the last incomplete row of pixel blocks here,
+    if (vblocks_incomplete) { // process the last incomplete row of pixel blocks here,
 
         for (col = 0; col < image->infoheader.width; col += block_d) { // col must be 0 at the start of this loop
 
             for (long long r = row; r >= 0; --r) {                // r delimits the start row of the block being defined
                 for (long long c = col; c < col + block_d; ++c) { // c delimits the start column of the block being defined
-                    offset          = (r * image->infoheader.width) + c;
-                    blockavg_blue  += image->pixels[offset].b;
-                    blockavg_green += image->pixels[offset].g;
-                    blockavg_red   += image->pixels[offset].r;
+                    offset  = (r * image->infoheader.width) + c;
+                    avgb   += image->pixels[offset].b;
+                    avgg   += image->pixels[offset].g;
+                    avgr   += image->pixels[offset].r;
                 }
             }
 
-            blockavg_blue  /= incomplete_blocksize_bottom;
-            blockavg_green /= incomplete_blocksize_bottom;
-            blockavg_red   /= incomplete_blocksize_bottom;
+            avgb /= incomplete_blocksize_bottom;
+            avgg /= incomplete_blocksize_bottom;
+            avgr /= incomplete_blocksize_bottom;
 
             __debug(incomplete++);
 
             // if (!(blockavg_blue <= 255.00 && blockavg_green <= 255.00 && blockavg_red <= 255.00))
             //     wprintf_s(L"Average (BGR) = (%.4f, %.4f, %.4f)\n", blockavg_blue, blockavg_green, blockavg_red);
 
-            assert(blockavg_blue <= 255.00 && blockavg_green <= 255.00 && blockavg_red <= 255.00);
-            buffer[caret++] = blockmap(blockavg_blue, blockavg_green, blockavg_red);
-            blockavg_blue = blockavg_green = blockavg_red = 0.000; // reset the block averages
+            assert(avgb <= 255.00 && avgg <= 255.00 && avgr <= 255.00);
+            buffer[caret++] = blockmap(avgb, avgg, avgr);
+            avgb = avgg = avgr = 0.000; // reset the block averages
         }
 
         buffer[caret++] = '\n';
@@ -295,7 +291,7 @@ static inline char* to_downscaled_string(const bitmap* const image) {
 
     __printf_debug("%5llu incomplete blocks at the bottom have been processed\n", incomplete);
     __printf_debug("caret :: %lld, nwchars :: %lld\n", caret, nwchars);
-    assert(caret == nwchars);
+    assert(caret == nchars);
 
     return buffer;
 }
