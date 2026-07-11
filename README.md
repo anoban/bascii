@@ -2,73 +2,54 @@
 --------------
 
 Three ascii palettes are available in `<utilities.h>` to choose the characters from. These are arrays of wide ascii characters ordered in increasing luminance:
+
 ```C
-static const wchar_t palette_minimal[]  = { ... };
-static const wchar_t palette[]          = { ... };
-static const wchar_t palette_extended[] = { ... };
+static const char palette_minimal[]  = { ... };
+static const char palette_base[]     = { ... };
+static const char palette_extended[] = { ... };
 ```
 
 For the RGB to ascii conversion, a string of mappers are available in `<utilities.h>`:
 
 ```C
 // uses the arithmetic average of the red, green and blue values of pixels
-static inline wchar_t __stdcall arithmetic_mapper(
-    _In_ const  rgbq* const  pixel,
-    _In_ const  wchar_t* const  palette,
-    _In_ const  unsigned plength
+static inline char  arithmetic_mapper(
+     const  rgbq* const  pixel,
+     const  char* const  palette,
+     const  unsigned plength
 );
 
 // scales red, green and blue values of pixels with predetermined weights
-static inline wchar_t __stdcall weighted_mapper(...);
+static inline char  weighted_mapper(...);
 
 // uses the average of the minimum and maximum values amongst red, green and blue values of each pixel
-static inline wchar_t __stdcall minmax_mapper(...);
+static inline char  minmax_mapper(...);
 
 // scales red, green and blue values of pixels with predetermined weights (different from the weights used by weighted_mapper)
-static inline wchar_t __stdcall luminosity_mapper(...);
+static inline char  luminosity_mapper(...);
 ```
 
 ```C
 // allows customization of the weights that were hardcoded in weighted and luminosity mappers
-static inline wchar_t __stdcall tunable_mapper(
-    _In_ const  rgbq* const  pixel,
-    _In_ const  float bscale, // scaling factor for blue
-    _In_ const  float gscale, // scaling factor for green
-    _In_ const  float rscale, // scaling factor for red
-    _In_ const wchar_t* const  palette,
-    _In_ const unsigned plength
+static inline char  tunable_mapper(
+     const  rgbq* const  pixel,
+     const  float bscale, // scaling factor for blue
+     const  float gscale, // scaling factor for green
+     const  float rscale, // scaling factor for red
+     const char* const  palette,
+     const unsigned plength
 );
 ```
 
-There are also an array of penalizing transformers in `<utilities.h>` that facilitate penaliztion of character mapping when pixels meet a specified criteria:
 
-```C
-// this mapper will penalize the result of the mapper by the specified penalty value when the pixel's RGB values all fall
-// within the ranges specified by the <>llim (lower limit) and <>ulim (upper limit) delimiters.
-static __forceinline wchar_t __stdcall penalizing_arithmeticmapper(
-    _In_ const  rgbq* const  pixel,
-    _In_ const  unsigned char bllim, // lower limit for blue
-    _In_ const  unsigned char bulim, // upper limit for blue
-    _In_ const  unsigned char gllim,
-    _In_ const  unsigned char gulim,
-    _In_ const  unsigned char rllim,
-    _In_ const  unsigned char rulim,
-    _In_ const wchar_t* const  palette,
-    _In_ const  unsigned plength,
-    _In_ const  float    penalty
-);
 
-static inline wchar_t __stdcall penalizing_weightedmapper(...);
-static inline wchar_t __stdcall penalizing_minmaxmapper(...);
-static inline wchar_t __stdcall penalizing_luminositymapper(...);
-```
 
 ------
 
-<div><img src="./readme/jennifer_lawrence.jpg"  width=45%> <img src="./readme/jennifer.jpg" width=45%></div>
-<div><img src="./readme/vendetta-wallpaper.jpg"  width=45%> <img src="./readme/vendetta.jpg" width=45%></div>
-<div><img src="./readme/ginger_woman.jpg"  width=45%> <img src="./readme/ginger.jpg" width=45%></div>
-<div><img src="./readme/butterflies_2.jpg"  width=45%> <img src="./readme/butterflies.jpg" width=45%></div>
+<div><img src="./images/readme/jennifer_lawrence.jpg"  width=45%> <img src="./images/readme/jennifer.jpg" width=45%></div>
+<div><img src="./images/readme/vendetta-wallpaper.jpg"  width=45%> <img src="./images/readme/vendetta.jpg" width=45%></div>
+<div><img src="./images/readme/ginger_woman.jpg"  width=45%> <img src="./images/readme/ginger.jpg" width=45%></div>
+<div><img src="./images/readme/butterflies_2.jpg"  width=45%> <img src="./images/readme/butterflies.jpg" width=45%></div>
 
 ### ___Caveats___
 -----------------
