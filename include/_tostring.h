@@ -1,88 +1,154 @@
 #pragma once
-#include <_bitmap.h>
+
 #include <stddef.h>
 
-#define CONSOLE_WIDTH              140LL
-#define CONSOLE_WIDTHR             140.0
+// clang-format off
+#include <_bitmap.h>
+#include <_utils.h>
+// clang-format on
 
-////////////////////////////////////
-//    PLACE FOR CUSTOMIZATIONS    //
-////////////////////////////////////
-#define spalette                   palette                                                    // PICK ONE OF THE THREE AVALIABLE PALETTES
-#define map(_pixel)                weighted_mapper(_pixel, spalette, __crt_countof(spalette)) // CHOOSE A BASIC MAPPER OF YOUR LIKING
+//----------------------------------
+//    PLACE FOR CUSTOMIZATIONS
+//----------------------------------
 
-// CHOOSE A BLOCK MAPPER OF YOUR LIKING
-#define blockmap(blue, green, red) weighted_blockmapper(blue, green, red, spalette, __crt_countof(spalette))
+#define CONSOLE_WIDTH     140
+#define CONSOLE_WIDTHR    ((double) (CONSOLE_WIDTH))
+
+#define character_palette palette_base                                                          // PICK ONE OF THE THREE AVALIABLE PALETTES
+#define map(_pixel)       weighted_mapper(_pixel, character_palette, sizeof(character_palette)) // CHOOSE A BASIC MAPPER OF YOUR LIKING
+#define blockmap(blue, green, red) weighted_blockmapper(blue, green, red, character_palette, sizeof(character_palette))
 
 // IT IS NOT OBLIGATORY FOR BOTH THE BASIC MAPPER AND THE BLOCK MAPPER TO USE THE SAME PALETTE
-// IF NEED BE, THE PALETTE EXPANDED FROM spalette COULD BE REPLACED BY A REAL PALETTE NAME
+// IF NEED BE, THE PALETTE EXPANDED FROM character_palette COULD BE REPLACED BY A REAL PALETTE NAME
 
-static inline char* to_raw_string(const bitmap* const image) {
-    if (image->infoheader.height < 0) {
-        fputs("Error in to_raw_string, this tool does not support bitmaps with top-down pixel ordering!\n", stderr);
+//----------------------------------
+
+static inline char* to_raw_string(
+    const bitmap* const image,
+    char (*mapper)(const rgbq* const, const char* const, unsigned),
+    const char* const palette,
+    const unsigned    psize
+) {
+    if (pixelorder(&image->infoheader) == TOPDOWN) {
+        fprintf(
+            stderr,
+            "Error in function %s in file %s at line %d, bitmaps with top-down pixel orders are not supported!\n",
+            __FUNCTION__,
+            __FILE__,
+            __LINE__
+        );
         return NULL;
     }
 
-    const long long npixels = (long long) image->infoheader.height * image->infoheader.width; // total pixels in the image
-    const long long nchars /* 1 wchar_t for each pixel + 1 additional character for LF ('\n') at the end of each scanline */ =
+    const long long npixels = (long long) (image->infoheader.height) * image->infoheader.width; // total pixels in the image
+    const long long nchars /* 1 char for each pixel + 1 additional character for LF ('\n') at the end of each scanline */ =
         npixels + 1LL * image->infoheader.height;
 
     char* const buffer = malloc(nchars + 1); // and the +1 is for the NULL terminator
     if (!buffer) {
-        fprintf(stderr, "Error in %s @ line %d: malloc failed!\n", __FUNCTION__, __LINE__);
+        fprintf(stderr, "Error in function %s in file %s at line %d, memory allocation failed!\n", __FUNCTION__, __FILE__, __LINE__);
         return NULL;
     }
 
     // pixels are organized in rows from bottom to top and, within each row, from left to right, each row is called a "scan line".
-    // if the image height is given as a negative number, then the rows are ordered from top to bottom (in most contemporary .BMP images, the pixel ordering seems to be bottom up)
+    // if the image height is given as a negative number, then the rows are ordered from top to bottom
+    // in most contemporary bitmap images, the pixel ordering is  bottom up
+
     // (pixel at the top left corner of the image)
     //                                            10 11 12 13 14 15 16 17 18 19 <-- this will be the last pixel (pixel at the bottom right corner of the image)
+    //                                            .............................
+    //                                            .............................
     //                                            .............................
     // this is the first pixel in the buffer -->  00 01 02 03 04 05 06 07 08 09
     // (pixel at the top left corner of the image)
 
     long long caret = 0;
-    // presuming pixels are ordered bottom up, start the traversal from the last pixel and move up.
-    // traverse up along the height, for each row, starting with the last row,
-    for (long long nrows = image->infoheader.height - 1LL; nrows >= 0; --nrows) {
+
+    // traverse up along the height, for each row, starting with the last row
+    for (long long row = image->infoheader.height - 1LL; row >= 0; --row) {
         // traverse left to right inside "scan lines"
-        for (long long ncols = 0; ncols < image->infoheader.width; ++ncols) // for each pixel in the row,
-            buffer[caret++] = map(&image->pixels[nrows * image->infoheader.width + ncols]);
-        // at the end of each scanline, append a CRLF!
-        buffer[caret++] = L'\n';
-        // buffer[caret++] = L'\r';
+        for (long long col = 0; col < image->infoheader.width; ++col) // for each pixel in the row,
+            buffer[caret++] = mapper(&image->pixels[row * image->infoheader.width + col], palette, psize);
+        buffer[caret++] = L'\n'; // at the end of each scanline, append an LF!
     }
 
     buffer[caret] = 0; // null termination of the string
 
-    assert(caret == nchars);
-    return buffer;
-}
-
-// generate the wchar_t buffer after downscaling the image such that the ascii representation will fit the terminal width (~142 chars),
-// downscaling is completely predicated only on the image width, and the proportionate scaling factor will be used to scale down the image vertically too.
-// downscaling needs to be done in square pixel blocks which will be represented by a single wchar_t
-static inline char* to_downscaled_string(const bitmap* const image) {
-    if (image->infoheader.height < 0) {
-        fputs("Error in to_downscaled_string, this tool does not support bitmaps with top-down pixel ordering!\n", stderr);
+    if (caret != nchars) {
+        fprintf(
+            stderr,
+            "Error in function %s in file %s at line %d, mismatch between number of characters mapped (%lld) and number of characters estimated to be mapped (%lld)\n",
+            __FUNCTION__,
+            __FILE__,
+            __LINE__,
+            caret,
+            nchars
+        );
+        free(buffer);
         return NULL;
     }
 
-    const long long block_d /* dimension of an individual square block */ = ceill(image->infoheader.width / CONSOLE_WIDTHR);
+    return buffer;
+}
 
-    const float blocksize /* number of pixels in a block */               = block_d * block_d; // since our blocks are square
+static inline char* to_downscaled_string(const bitmap* const image) {
+    // generate the character buffer after downscaling the image such that the ASCII representation will fit the terminal width (~142 chars)
+    // downscaling is solely dependent on the image width, and a proportionate scaling factor will be used to downscale the image vertically too
+    // downscaling needs to be done in square pixel blocks which will be represented by a single ASCII character
 
-    long long pblocksize_right = // number of pixels in each block in the rightmost column of incomplete blocks.
-        // width of the image - (number of complete blocks * block dimension) will give the residual pixels along the horizontal axis
-        // multiply that by block domension again, and we'll get the number of pixels in the incomplete block
-        (image->infoheader.width -
-         (image->infoheader.width / block_d) /* deliberate integer division to get only the count of complete blocks */ * block_d) *
+    if (pixelorder(&image->infoheader) == TOPDOWN) {
+        fprintf(
+            stderr,
+            "Error in function %s in file %s at line %d, bitmaps with top-down pixel orders are not supported!\n",
+            __FUNCTION__,
+            __FILE__,
+            __LINE__
+        );
+        return NULL;
+    }
+
+    const long long block_d                    = ceil(image->infoheader.width / CONSOLE_WIDTHR); // dimension of an individual square block
+    const long long blocksize                  = block_d * block_d;                              // number of pixels in a square block
+
+    // if the number of pixels in a row is not divisible without remainders by our block width, the last column of blocks will be incomplete
+    // i.e. width smaller than the precalculated block width
+    const long long incomplete_blocksize_right = // number of pixels in each block in the rightmost column of incomplete blocks.
+        // width of the image - (number of complete blocks * block dimension) will give the residual pixels along rows
+        // multiply that by block height, we'll get the number of pixels in the incomplete block
+        (image->infoheader.width - // signed integer divisions truncate towards 0 (flooring)
+         (image->infoheader.width / block_d) /* deliberate integer division to only get the count of complete blocks */ * block_d) *
         block_d;
-    assert(pblocksize_right < blocksize);
 
-    // the block size to represent the number of pixels held by the last row blocks
-    long long pblocksize_bottom = (image->infoheader.height - (image->infoheader.height / block_d) * block_d) * block_d;
-    assert(pblocksize_bottom < blocksize);
+    if (incomplete_blocksize_right >= blocksize) { // shouldn't be - indicates a logic error
+        fprintf(
+            stderr,
+            "Error in function %s in file %s at line %d, size of an incomplete block (%lld) cannot be equal to or bigger than the size of a complete block (%lld)!\n",
+            __FUNCTION__,
+            __FILE__,
+            __LINE__,
+            incomplete_blocksize_right,
+            blocksize
+        );
+        return NULL;
+    }
+
+    // similarly, when the image height is indivisible without remainders by the block height, the last row of blocks (upper most in the image)
+    // will be incomplete i.e. with a height shorter than the block height
+    // to calculate this, we reapply the same logic, this time, to the vertical axis
+    const long long incomplete_blocksize_bottom = (image->infoheader.height - (image->infoheader.height / block_d) * block_d) * block_d;
+
+    if (incomplete_blocksize_bottom >= blocksize) {
+        fprintf(
+            stderr,
+            "Error in function %s in file %s at line %d, size of an incomplete block (%lld) cannot be equal to or bigger than the size of a complete block (%lld)!\n",
+            __FUNCTION__,
+            __FILE__,
+            __LINE__,
+            incomplete_blocksize_bottom,
+            blocksize
+        );
+        return NULL;
+    }
 
     const long long nblocks_w = ceill(image->infoheader.width / (float) block_d);
     const long long nblocks_h = ceill(image->infoheader.height / (float) block_d);
@@ -170,12 +236,12 @@ static inline char* to_downscaled_string(const bitmap* const image) {
             }
 
             __debug(incomplete++);
-            assert(count == pblocksize_right); // fails
+            assert(count == incomplete_blocksize_right); // fails
             __debug(count = 0);
 
-            blockavg_blue  /= pblocksize_right;
-            blockavg_green /= pblocksize_right;
-            blockavg_red   /= pblocksize_right;
+            blockavg_blue  /= incomplete_blocksize_right;
+            blockavg_green /= incomplete_blocksize_right;
+            blockavg_red   /= incomplete_blocksize_right;
 
             assert(blockavg_blue <= 255.00 && blockavg_green <= 255.00 && blockavg_red <= 255.00);
 
@@ -205,9 +271,9 @@ static inline char* to_downscaled_string(const bitmap* const image) {
                 }
             }
 
-            blockavg_blue  /= pblocksize_bottom;
-            blockavg_green /= pblocksize_bottom;
-            blockavg_red   /= pblocksize_bottom;
+            blockavg_blue  /= incomplete_blocksize_bottom;
+            blockavg_green /= incomplete_blocksize_bottom;
+            blockavg_red   /= incomplete_blocksize_bottom;
 
             __debug(incomplete++);
 

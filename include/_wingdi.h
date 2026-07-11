@@ -1,6 +1,8 @@
 #pragma once
 
-// a proxy header to provide definitions for some essential structs
+#include <assert.h>
+
+// a header providing proxy definitions for some essential Win32 structs related to bitmaps
 
 // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-rgbquad
 typedef struct {
