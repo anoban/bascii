@@ -9,12 +9,12 @@
 #include <_wingdi.h>
 // clang-format on
 
-#ifdef _DEBUG
-    #define __printf_debug(...) fprintf(stderr, __VA_ARGS__)
-    #define __debug(...)        (__VA_ARGS__)
+#ifdef __VERBOSE_OUTPUTS
+    #define __printf_verbose(...) fprintf(stderr, __VA_ARGS__)
+    #define _verbose(...)         (__VA_ARGS__)
 #else
-    #define __printf_debug(...)
-    #define __debug(...)
+    #define __printf_verbose(...)
+    #define _verbose(...)
 #endif // _DEBUG
 
 // characters in ascending order of luminance
