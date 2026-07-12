@@ -1,7 +1,7 @@
 ## ___Windows BMP images to ASCII strings___
 --------------
 
-Three ascii palettes are available in `<utilities.h>` to choose the characters from. These are arrays of wide ascii characters ordered in increasing luminance:
+Three ascii palettes are available in `<utils.h>` to choose the characters from. These are arrays of wide ascii characters ordered in increasing luminance:
 
 ```C
 static const char palette_minimal[]  = { ... };
@@ -9,40 +9,21 @@ static const char palette_base[]     = { ... };
 static const char palette_extended[] = { ... };
 ```
 
-For the RGB to ascii conversion, a string of mappers are available in `<utilities.h>`:
+For the RGB to ascii conversion, a string of mappers are available in `<utils.h>`:
 
 ```C
 // uses the arithmetic average of the red, green and blue values of pixels
-static inline char  arithmetic_mapper(
-     const  rgbq* const  pixel,
-     const  char* const  palette,
-     const  unsigned plength
-);
+static inline char arithmetic(const  rgbq* const  pixel, const  char* const  palette, const  unsigned plength)
 
 // scales red, green and blue values of pixels with predetermined weights
-static inline char  weighted_mapper(...);
+static inline char weighted(...)
 
 // uses the average of the minimum and maximum values amongst red, green and blue values of each pixel
-static inline char  minmax_mapper(...);
+static inline char minmax(...)
 
 // scales red, green and blue values of pixels with predetermined weights (different from the weights used by weighted_mapper)
-static inline char  luminosity_mapper(...);
+static inline char luminosity(...)
 ```
-
-```C
-// allows customization of the weights that were hardcoded in weighted and luminosity mappers
-static inline char  tunable_mapper(
-     const  rgbq* const  pixel,
-     const  float bscale, // scaling factor for blue
-     const  float gscale, // scaling factor for green
-     const  float rscale, // scaling factor for red
-     const char* const  palette,
-     const unsigned plength
-);
-```
-
-
-
 
 ------
 

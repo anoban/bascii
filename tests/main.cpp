@@ -1,6 +1,5 @@
-#define TEST_TIMES 5LL // DON'T EVEN THINK ABOUT INCREASING THIS. WITH 5 ALONE, TESTING TOOK A FEW MINUTES TO FINISH!
-#include <_tostring.h>
 #include <time.h>
+#include <tostring.h>
 
 static const rgbq min                     = { .rgbBlue = 0x00, .rgbGreen = 0x00, .rgbRed = 0x00, .rgbReserved = 0xFF };
 static const rgbq mid                     = { .rgbBlue = 0x80, .rgbGreen = 0x80, .rgbRed = 0x80, .rgbReserved = 0xFF };
