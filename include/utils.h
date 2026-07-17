@@ -56,53 +56,61 @@ static const char PALETTE_EXTENDED[] = { ' ', '.', '\'', '`', '^', '"', ',', ':'
 // PIXEL TO CHARACTER MAPPERS
 //--------------------------------
 
-static inline unsigned nudge(float _value) {
+static inline unsigned __attribute__((always_inline)) _nudge(float _value) {
     // taking it for granted that the input will never be a negative value
     return _value < 1.000000 ? 1 : (unsigned) _value;
 }
 
-static inline char arithmetic(const rgbq* const pixel, const char* const palette, unsigned plength) {
+static inline char __attribute__((always_inline)) arithmetic(const rgbq* const pixel, const char* const palette, unsigned plength) {
     const unsigned offset = ((double) pixel->b + pixel->g + pixel->r) / 3.000; // can range from 0 to 255
     // hence, offset / (float)(UCHAR_MAX) can range from 0.0 to 1.0
-    return palette[offset ? nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
+    return palette[offset ? _nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
 }
 
-static inline char weighted(const rgbq* const pixel, const char* const palette, unsigned plength) {
+static inline char __attribute__((always_inline)) weighted(const rgbq* const pixel, const char* const palette, unsigned plength) {
     const unsigned offset = pixel->b * 0.299 + pixel->g * 0.587 + pixel->r * 0.114;
-    return palette[offset ? nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
+    return palette[offset ? _nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
 }
 
-static inline char minmax(const rgbq* const pixel, const char* const palette, unsigned plength) {
+static inline char __attribute__((always_inline)) minmax(const rgbq* const pixel, const char* const palette, unsigned plength) {
     const unsigned offset = (unsigned) ((fmin(fmin(pixel->b, pixel->g), pixel->r) + fmax(fmax(pixel->b, pixel->g), pixel->r)) / 2.0000);
-    return palette[offset ? nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
+    return palette[offset ? _nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
 }
 
-static inline char luminosity(const rgbq* const pixel, const char* const palette, unsigned plength) {
+static inline char __attribute__((always_inline)) luminosity(const rgbq* const pixel, const char* const palette, unsigned plength) {
     const unsigned offset = pixel->b * 0.2126 + pixel->g * 0.7152 + pixel->r * 0.0722;
-    return palette[offset ? nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
+    return palette[offset ? _nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
 }
 
 //---------------------------------------
 // PIXEL BLOCKS TO CHARACTER MAPPERS
 //---------------------------------------
 
-static inline char arithmetic_blockmapper(float b, float g, float r, const char* const palette, unsigned plength) {
+static inline char __attribute__((always_inline)) arithmetic_blockmapper(
+    float b, float g, float r, const char* const palette, unsigned plength
+) {
     const unsigned offset = (b + g + r) / 3.000; // can range from 0 to 255
     // hence, offset / (float)(UCHAR_MAX) can range from 0.0 to 1.0
-    return palette[offset ? nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
+    return palette[offset ? _nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
 }
 
-static inline char weighted_blockmapper(float b, float g, float r, const char* const palette, unsigned plength) {
+static inline char __attribute__((always_inline)) weighted_blockmapper(
+    float b, float g, float r, const char* const palette, unsigned plength
+) {
     const unsigned offset = b * 0.299 + g * 0.587 + r * 0.114;
-    return palette[offset ? nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
+    return palette[offset ? _nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
 }
 
-static inline char minmax_blockmapper(float b, float g, float r, const char* const palette, unsigned plength) {
+static inline char __attribute__((always_inline)) minmax_blockmapper(
+    float b, float g, float r, const char* const palette, unsigned plength
+) {
     const unsigned offset = (fminf(fminf(b, g), r) + fmaxf(fmaxf(b, g), r)) / 2.0000;
-    return palette[offset ? nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
+    return palette[offset ? _nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
 }
 
-static inline char luminosity_blockmapper(float b, float g, float r, const char* const palette, unsigned plength) {
+static inline char __attribute__((always_inline)) luminosity_blockmapper(
+    float b, float g, float r, const char* const palette, unsigned plength
+) {
     const unsigned offset = b * 0.2126 + g * 0.7152 + r * 0.0722;
-    return palette[offset ? nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
+    return palette[offset ? _nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
 }
