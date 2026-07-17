@@ -17,27 +17,30 @@
     #define _verbose(...)
 #endif // _DEBUG
 
+//-----------------------------------------------
 // characters in ascending order of luminance
-static const char palette_minimal[]  = { '_', '.', ',', '-', '=', '+', ':', ';', 'c', 'b', 'a', '!', '?', '1',
+//-----------------------------------------------
+
+static const char PALETTE_MINIMAL[]  = { '_', '.', ',', '-', '=', '+', ':', ';', 'c', 'b', 'a', '!', '?', '1',
                                          '2', '3', '4', '5', '6', '7', '8', '9', '$', 'W', '#', '@', 'N' };
 
-static const char palette_base[]     = { ' ', '.', '-', ',', ':', '+', '~', ';', '(', '%', 'x', '1', '*', 'n', 'u',
+static const char PALETTE_BASE[]     = { ' ', '.', '-', ',', ':', '+', '~', ';', '(', '%', 'x', '1', '*', 'n', 'u',
                                          'T', '3', 'J', '5', '$', 'S', '4', 'F', 'P', 'G', 'O', 'V', 'X', 'E', 'Z',
                                          '8', 'A', 'U', 'D', 'H', 'K', 'W', '@', 'B', 'Q', '#', '0', 'M', 'N' };
 
-static const char palette_extended[] = { ' ', '.', '\'', '`', '^', '"', ',', ':', ';', 'I',  'l',  '!', 'i', '>', '<', '~', '+', '_',
+static const char PALETTE_EXTENDED[] = { ' ', '.', '\'', '`', '^', '"', ',', ':', ';', 'I',  'l',  '!', 'i', '>', '<', '~', '+', '_',
                                          '-', '?', ']',  '[', '}', '{', '1', ')', '(', '|',  '\\', '/', 't', 'f', 'j', 'r', 'x', 'n',
                                          'u', 'v', 'c',  'z', 'X', 'Y', 'U', 'J', 'C', '\'', 'Q',  '0', 'O', 'Z', 'm', 'w', 'q', 'p',
                                          'd', 'b', 'k',  'h', 'a', 'o', '*', '#', 'M', 'W',  '&',  '8', '%', 'B', '@', '$' };
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
-// transformers that map an RGB pixel to a representative unicode character, using the provided palette //
+// transformers that map an RGB pixel to a representative ascii character, using the provided palette //
 //////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// one concern about these mappers is that the logic offset / (float) UCHAR_MAX could be any value between 0.0000 and 1.000
+// one concern about these mappers is that the logic (offset / (float) UCHAR_MAX) could be any value between 0.0000 and 1.000
 // because offset can be anywhere between 0 and 255!
 // when it comes to mapping this pixel value to a character, multiplication by palette length can yield very small values, even for the longest palette
-// the longest palette we have is the palette_extended, which is 70 characters long
+// the longest palette we have is the PALETTE_EXTENDED, which is 70 characters long
 // consider when offset is non-zero but still very small, e.g. offset = 1,
 // ((offset / (float) (UCHAR_MAX)) evaluates to 1 / 255.0 = 0.00392156862745098
 // that multiplied by palette length, 0.00392156862745098 * 70 = 0.274509803921569
@@ -95,7 +98,7 @@ static inline char weighted_blockmapper(float b, float g, float r, const char* c
 }
 
 static inline char minmax_blockmapper(float b, float g, float r, const char* const palette, unsigned plength) {
-    const unsigned offset = (fmin(fmin(b, g), r) + fmax(fmax(b, g), r)) / 2.0000;
+    const unsigned offset = (fminf(fminf(b, g), r) + fmaxf(fmaxf(b, g), r)) / 2.0000;
     return palette[offset ? nudge(offset / (float) (UCHAR_MAX) *plength) - 1 : 0];
 }
 

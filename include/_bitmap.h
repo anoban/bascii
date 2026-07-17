@@ -17,7 +17,7 @@
 static inline unsigned char* imopen(const char* const fpath, long* const nreadbytes) {
     *nreadbytes             = 0;
     unsigned char* buffer   = NULL;
-    struct stat    filestat = {};
+    struct stat    filestat = { 0 };
     long           nbytes   = 0;
 
     const int fdesc         = open(fpath, O_RDONLY);

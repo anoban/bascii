@@ -4,9 +4,9 @@
 Three ascii palettes are available in `<utils.h>` to choose the characters from. These are arrays of wide ascii characters ordered in increasing luminance:
 
 ```C
-static const char palette_minimal[]  = { ... };
-static const char palette_base[]     = { ... };
-static const char palette_extended[] = { ... };
+static const char PALETTE_MINIMAL[]  = { ... };
+static const char PALETTE_BASE[]     = { ... };
+static const char PALETTE_EXTENDED[] = { ... };
 ```
 
 For the RGB to ascii conversion, a string of mappers are available in `<utils.h>`:

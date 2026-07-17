@@ -15,6 +15,12 @@
 #define CONSOLE_WIDTH  140
 #define CONSOLE_WIDTHR ((double) (CONSOLE_WIDTH))
 
+#define BASE_MAPPER    arithmetic
+#define BASE_PALETTE   PALETTE_EXTENDED
+
+#define BLOCK_MAPPER   arithmetic_blockmapper
+#define BLOCK_PALETTE  PALETTE_EXTENDED
+
 //----------------------------------
 
 static inline char* to_raw_string(
@@ -146,6 +152,34 @@ static inline char* to_downscaled_string(
         return NULL;
     }
 
+    /*
+
+    imagine this as a grid of pixel blocks, this is the last column of incomplete blocks ----------------
+                                                                                                         |
+                                                                                                         |
+    |..........|..........|..........|..........|..........|..........|..........|..........|..........|.....
+    |..........|..........|..........|..........|..........|..........|..........|..........|..........|.....
+    |..........|..........|..........|..........|..........|..........|..........|..........|..........|.....
+    |..........|..........|..........|..........|..........|..........|..........|..........|..........|.....
+    |..........|..........|..........|..........|..........|..........|..........|..........|..........|.....
+    ---------------------------------------------------------------------------------------------------------
+    |..........|..........|..........|..........|..........|..........|..........|..........|..........|.....
+    |..........|..........|..........|..........|..........|..........|..........|..........|..........|.....
+    |..........|..........|..........|..........|..........|..........|..........|..........|..........|.....
+    |..........|..........|..........|..........|..........|..........|..........|..........|..........|.....
+    |..........|..........|..........|..........|..........|..........|..........|..........|..........|.....
+    ---------------------------------------------------------------------------------------------------------
+    |..........|..........|..........|..........|..........|..........|..........|..........|..........|.....
+    |..........|..........|..........|..........|..........|..........|..........|..........|..........|.....
+    |..........|..........|..........|..........|..........|..........|..........|..........|..........|.....
+    |..........|..........|..........|..........|..........|..........|..........|..........|..........|.....
+        |                                                                                                  |
+        |                                                                                                  |
+        ----- this is the last row of incomplete blocks                                                    |
+                and this block at the bottom right can be incomplete in terms of width and height ---------
+
+    */
+
     // number of total blocks along rows (including incomplete blocks) - hence the round up with ceil()
     const long long hblocks_total = ceil((double) image->infoheader.width / block_dim);
     // number of total blocks along columns (including incomplete blocks)
@@ -161,14 +195,6 @@ static inline char* to_downscaled_string(
         return NULL;
     }
 
-    double    avgb = 0.0, avgg = 0.0, avgr = 0.0; // per block averages of the rgbBlue, rgbGreen and rgbRed values
-    long long caret = 0, offset = 0, col = 0, row = 0;
-
-    // true if the image width is not divisible by CONSOLE_WIDTH without remainders
-    const bool hincomplete = image->infoheader.width % CONSOLE_WIDTH;
-    // true if the image height is not divisible by block_d without remainders
-    const bool vincomplete = image->infoheader.height % block_dim;
-
 #ifdef __VERBOSE_OUTPUTS
     fprintf(stderr, "Width - %d, Height - %d\n", image->infoheader.width, image->infoheader.height);
     fprintf(stderr, "Size of the square block - %lld\n", block_dim);
@@ -181,28 +207,34 @@ static inline char* to_downscaled_string(
     fprintf(stderr, "Dimension of the incomplete blocks in the bottom row (w, h) - (%lld, %lld)\n", block_dim, incbheight_b);
 #endif
 
-    long long nbfull = 0, nbincomplete = 0, count = 0; // number of full, incomplete blocks mapped to characters
+    double    avgb = 0.0, avgg = 0.0, avgr = 0.0; // per block averages of the rgbBlue, rgbGreen and rgbRed values
+    long long caret = 0, offset = 0, col = 0, row = 0;
+    long long nbfull = 0, nbincomplete = 0, pixelcount_complete_block = 0; // number of full, incomplete blocks mapped to characters
+
+    // true if the image width is not divisible by CONSOLE_WIDTH without remainders
+    const bool hincomplete = image->infoheader.width % CONSOLE_WIDTH;
+    // true if the image height is not divisible by block_d without remainders
+    const bool vincomplete = image->infoheader.height % block_dim;
 
     // row = image->infoheader.height will get us to the last pixel of the first (last in the buffer) scanline with (r * image->infoheader.width)
     // hence, row = image->infoheader.height - 1 so we can traverse pixels in the first scanline with (r * image->infoheader.width) + c
     for (row = image->infoheader.height - 1; row >= (block_dim - 1); row -= block_dim) { // start the traversal at the bottom most scan line
+        for (col = 0; col <= (image->infoheader.width - block_dim); col += block_dim) {  // traverse left to right in scan lines
 
-        for (col = 0; col <= image->infoheader.width - block_dim; col += block_dim) { // traverse left to right in scan lines
-
-            for (long long r = row; r > row - block_dim; --r) { // deal with blocks
+            for (long long r = row; r > row - block_dim; --r) { // average over all the pixels within the chosen block
                 for (long long c = col; c < col + block_dim; ++c) {
                     offset  = (r * image->infoheader.width) + c;
                     avgb   += image->pixels[offset].b;
                     avgg   += image->pixels[offset].g;
                     avgr   += image->pixels[offset].r;
 
-                    _verbose(count++);
+                    _verbose(pixelcount_complete_block++);
                 }
             }
 
             _verbose(nbfull++);
-            assert(count == block_dim * block_dim);
-            _verbose(count = 0);
+            assert(pixelcount_complete_block == block_dim * block_dim);
+            _verbose(pixelcount_complete_block = 0);
 
             avgb /= blocksize;
             avgg /= blocksize;
@@ -214,8 +246,11 @@ static inline char* to_downscaled_string(
             avgb = avgg = avgr = 0.000;
         }
 
-        if (hincomplete) { // if there are partially filled blocks at the end of this row of blocks,
+        //------------------------------------------------------------------------
+        // for the right most incomplete block in this row of blocks, if present
+        //------------------------------------------------------------------------
 
+        if (hincomplete) {
             for (long long r = row; r > row - block_dim; --r) {
                 // shift the column delimiter backward by one block, to the end of the last complete block
                 for (long long c = col; c < image->infoheader.width; ++c) { // start from the end of the last complete block
@@ -224,13 +259,13 @@ static inline char* to_downscaled_string(
                     avgg   += image->pixels[offset].g;
                     avgr   += image->pixels[offset].r;
 
-                    _verbose(count++);
+                    _verbose(pixelcount_complete_block++);
                 }
             }
 
             _verbose(nbincomplete++);
-            assert(count == incomplete_blocksize_right); // fails
-            _verbose(count = 0);
+            assert(pixelcount_complete_block == incomplete_blocksize_right); // fails
+            _verbose(pixelcount_complete_block = 0);
 
             avgb /= incomplete_blocksize_right;
             avgg /= incomplete_blocksize_right;
@@ -253,8 +288,11 @@ static inline char* to_downscaled_string(
     assert(row < block_dim);
     _verbose(nbincomplete = 0);
 
-    if (vincomplete) { // process the last incomplete row of pixel blocks here,
+    //--------------------------------------------------------
+    // for the last row of incomplete blocks, if present
+    //--------------------------------------------------------
 
+    if (vincomplete) {
         for (col = 0; col < image->infoheader.width; col += block_dim) { // col must be 0 at the start of this loop
 
             for (long long r = row; r >= 0; --r) {                  // r delimits the start row of the block being defined
@@ -295,6 +333,6 @@ static inline char* to_downscaled_string(
 
 // an image width dependent dispatcher for to_raw_string and to_downscaled_string, that actually do the heavy lifting
 static inline char* to_string(const bitmap* const image) {
-    if (image->infoheader.width <= CONSOLE_WIDTH) return to_raw_string(image);
-    return to_downscaled_string(image);
+    if (image->infoheader.width <= CONSOLE_WIDTH) return to_raw_string(image, BASE_MAPPER, BASE_PALETTE, sizeof(BASE_PALETTE));
+    return to_downscaled_string(image, BLOCK_MAPPER, BLOCK_PALETTE, sizeof(BLOCK_PALETTE));
 }
