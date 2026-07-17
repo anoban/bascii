@@ -2,7 +2,7 @@ CC = /usr/bin/gcc
 
 CPP = /usr/bin/g++
 
-DEBUG = -DDEBUG -D_DEBUG -O0 -g3
+DEBUG = -DDEBUG -D_DEBUG -O0 -g3 -D__VERBOSE_OUTPUTS
 
 NODEBUG = -D_NDEBUG -DNDEBUG -O3 -g0
 
@@ -20,7 +20,7 @@ build:
 	$(CC) $(INCLUDE_DIRS) ./main.c $(CCFLAGS) $(NODEBUG) -o bascii.out
 
 test:
-	$(CPP) $(INCLUDE_DIRS) ./tests/main.cpp $(GTEST_ALL) $(CPPFLAGS) -D__TEST__ $(NODEBUG) -o test.out
+	$(CPP) $(INCLUDE_DIRS) ./tests/main.cpp $(GTEST_ALL) $(CPPFLAGS) -D__TEST__ $(DEBUG) -o test.out
 
 clean:
 	rm -f ./*.out

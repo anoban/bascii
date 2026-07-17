@@ -1,12 +1,24 @@
-#include <time.h>
-#include <tostring.h>
+#include <ctime>
 
-static const rgbq min                     = { .rgbBlue = 0x00, .rgbGreen = 0x00, .rgbRed = 0x00, .rgbReserved = 0xFF };
-static const rgbq mid                     = { .rgbBlue = 0x80, .rgbGreen = 0x80, .rgbRed = 0x80, .rgbReserved = 0xFF };
-static const rgbq max                     = { .rgbBlue = 0xFF, .rgbGreen = 0xFF, .rgbRed = 0xFF, .rgbReserved = 0xFF };
+#ifndef __VERBOSE_OUTPUTS
+    #define __VERBOSE_OUTPUTS 1
+#endif
+
+#ifndef __TEST__
+    #define __TEST__ 1
+#endif
+
+// clang-format off
+#include <gtest/gtest.h>
+#include <tostring.h>
+// clang-format on
+
+static constexpr rgbq min { .b = 0x00, .g = 0x00, .r = 0x00, ._ = 0xFF };
+static constexpr rgbq mid { .b = 0x80, .g = 0x80, .r = 0x80, ._ = 0xFF };
+static constexpr rgbq max { .b = 0xFF, .g = 0xFF, .r = 0xFF, ._ = 0xFF };
 
 // a 300 byte chunk extracted from a real BMP file, for testing
-static constexpr unsigned char dummybmp[] = {
+static constexpr unsigned char dummybmp[] {
     66, 77,  54, 129, 21, 0,   0,   0,  0,  0,   54,  0,  0,  0,   40, 0, 0,  0,   222, 2, 0,  0,   224, 1, 0,  0,   1, 0, 32, 0,   0, 0,
     0,  0,   0,  0,   0,  0,   196, 14, 0,  0,   196, 14, 0,  0,   0,  0, 0,  0,   0,   0, 0,  0,   2,   2, 8,  255, 2, 2, 8,  255, 1, 1,
     7,  255, 1,  1,   7,  255, 0,   0,  6,  255, 0,   1,  5,  255, 0,  1, 5,  255, 0,   1, 5,  255, 0,   1, 5,  255, 2, 1, 5,  255, 7, 4,
@@ -19,19 +31,37 @@ static constexpr unsigned char dummybmp[] = {
     19, 255, 8,  8,   20, 255, 8,   8,  20, 255, 8,   8
 };
 
-static const float RNDMAX = RAND_MAX + 2.0000;
+static constexpr float RANDMAX { RAND_MAX + 2.0000 };
 // the + 2.0000 is just for extra safety that we do not get too close to 1.000 when dividing rand() by RNDMAX
+
+static constexpr unsigned long long PALETTE_LENGTHS[] { sizeof(PALETTE_MINIMAL), sizeof(PALETTE_BASE), sizeof(PALETTE_EXTENDED) };
+
+TEST(basic_mappers, arithmetic) { // make sure that all the basic mappers don't compute off-bound offsets for palettes
+
+    rgbq test = { 0x00, 0x00, 0x00, 0xFF };
+
+    for (unsigned b = 0; b <= UCHAR_MAX; ++b) {
+        for (unsigned g = 0; g <= UCHAR_MAX; ++g) {
+            for (unsigned r = 0; r <= UCHAR_MAX; ++r) {
+                test.b = b;
+                test.g = g;
+                test.r = r;
+
+                ASSERT_NE(
+                    std::find(std::cbegin(PALETTE_BASE), std::cend(PALETTE_BASE), ::arithmetic(&test, PALETTE_BASE, sizeof(PALETTE_BASE))),
+                    std::cend(PALETTE_BASE)
+                );
+            }
+        }
+    }
+}
 
 int main() {
     srand(time(NULL));
 
-#pragma region __TEST_BMP_STARTTAGS__
-
     assert(START_TAG_LE == 0x4D42);
     assert(*(unsigned short*) (dummybmp) == START_TAG_LE);
-#pragma endregion
 
-#pragma region __TEST_TRANSFORMERS__
     assert(arithmetic(&min) == 0);
     assert(arithmetic(&max) == UCHAR_MAX);
     assert(arithmetic(&mid) == 128);
@@ -64,10 +94,8 @@ int main() {
             }
         }
     }
-#pragma endregion
 
-#pragma region __TEST_RGBMAPPERS__
-    rgbq          temp    = { 0 };
+    rgbq          temp {};
     float         bscaler = 0.000, gscaler = 0.000, rscaler = 0.000, rnd = 0.000;
     unsigned char r = 0, g = 0, b = 0;
 
@@ -79,8 +107,8 @@ int main() {
                 temp.rgbRed   = red;
 
                 rnd           = rand() / (float) RAND_MAX; // [0.0, 1.0]
-                bscaler       = rand() / RNDMAX;           // [0.0, 1.0)
-                gscaler       = (ONE - bscaler) * (rand() / RNDMAX);
+                bscaler       = rand() / RANDMAX;          // [0.0, 1.0)
+                gscaler       = (ONE - bscaler) * (rand() / RANDMAX);
                 rscaler       = ONE - (bscaler + gscaler);
                 // if ((bscaler + gscaler + rscaler) > ONE) wprintf_s(L"%.10lf\n", bscaler + gscaler + rscaler);
 
@@ -193,9 +221,6 @@ int main() {
         }
     }
 
-#pragma endregion
-
-#pragma region __TEST_PARSERS__
     const fhead bmpfh = parse_fileheader(dummybmp, __crt_countof(dummybmp));
     assert(bmpfh.bfType == START_TAG_LE);
     assert(bmpfh.bfSize == 1409334); // size of the image where this buffer was extracted from, in bytes
@@ -218,9 +243,7 @@ int main() {
 
     const BITMAP_PIXEL_ORDERING order = get_pixel_order(&bmpinfh);
     assert(order == BOTTOMUP);
-#pragma endregion
 
-#pragma region __TEST_ALL__
     // all of these test images will cause to_string to reroute to to_raw_string
     static const wchar_t* const filenames[] = { L"./test/bobmarley.bmp", L"./test/football.bmp",  L"./test/garfield.bmp",
                                                 L"./test/gewn.bmp",      L"./test/girl.bmp",      L"./test/jennifer.bmp",
@@ -244,7 +267,6 @@ int main() {
         bmpclose(&image);
         _ptr++;
     }
-#pragma endregion
 
     _putws(L"all's good :)");
     return EXIT_SUCCESS;
