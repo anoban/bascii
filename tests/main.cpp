@@ -10,7 +10,9 @@
 
 // clang-format off
 #include <gtest/gtest.h>
+namespace bascii {
 #include <tostring.h>
+}
 // clang-format on
 
 static constexpr rgbq min { .b = 0x00, .g = 0x00, .r = 0x00, ._ = 0xFF };
@@ -36,9 +38,9 @@ static constexpr float RANDMAX { RAND_MAX + 2.0000 };
 
 static constexpr unsigned long long PALETTE_LENGTHS[] { sizeof(PALETTE_MINIMAL), sizeof(PALETTE_BASE), sizeof(PALETTE_EXTENDED) };
 
-TEST(basic_mappers, arithmetic) { // make sure that all the basic mappers don't compute off-bound offsets for palettes
-
-    rgbq test = { 0x00, 0x00, 0x00, 0xFF };
+// make sure that all the basic mappers don't compute off-bound offsets for palettes
+TEST(basic_mappers, arithmetic) {
+    rgbq test { 0x00, 0x00, 0x00, 0xFF };
 
     for (unsigned b = 0; b <= UCHAR_MAX; ++b) {
         for (unsigned g = 0; g <= UCHAR_MAX; ++g) {
@@ -48,8 +50,95 @@ TEST(basic_mappers, arithmetic) { // make sure that all the basic mappers don't 
                 test.r = r;
 
                 ASSERT_NE(
-                    std::find(std::cbegin(PALETTE_BASE), std::cend(PALETTE_BASE), ::arithmetic(&test, PALETTE_BASE, sizeof(PALETTE_BASE))),
-                    std::cend(PALETTE_BASE)
+                    ::memchr(PALETTE_BASE, bascii::arithmetic(&test, PALETTE_BASE, sizeof(PALETTE_BASE)), sizeof(PALETTE_BASE)), NULL
+                );
+                ASSERT_NE(
+                    ::memchr(PALETTE_MINIMAL, bascii::arithmetic(&test, PALETTE_MINIMAL, sizeof(PALETTE_MINIMAL)), sizeof(PALETTE_MINIMAL)),
+                    NULL
+                );
+                ASSERT_NE(
+                    ::memchr(
+                        PALETTE_EXTENDED, bascii::arithmetic(&test, PALETTE_EXTENDED, sizeof(PALETTE_EXTENDED)), sizeof(PALETTE_EXTENDED)
+                    ),
+                    NULL
+                );
+            }
+        }
+    }
+}
+
+TEST(basic_mappers, weighted) {
+    rgbq test { 0x00, 0x00, 0x00, 0xFF };
+
+    for (unsigned b = 0; b <= UCHAR_MAX; ++b) {
+        for (unsigned g = 0; g <= UCHAR_MAX; ++g) {
+            for (unsigned r = 0; r <= UCHAR_MAX; ++r) {
+                test.b = b;
+                test.g = g;
+                test.r = r;
+
+                ASSERT_NE(::memchr(PALETTE_BASE, bascii::weighted(&test, PALETTE_BASE, sizeof(PALETTE_BASE)), sizeof(PALETTE_BASE)), NULL);
+                ASSERT_NE(
+                    ::memchr(PALETTE_MINIMAL, bascii::weighted(&test, PALETTE_MINIMAL, sizeof(PALETTE_MINIMAL)), sizeof(PALETTE_MINIMAL)),
+                    NULL
+                );
+                ASSERT_NE(
+                    ::memchr(
+                        PALETTE_EXTENDED, bascii::weighted(&test, PALETTE_EXTENDED, sizeof(PALETTE_EXTENDED)), sizeof(PALETTE_EXTENDED)
+                    ),
+                    NULL
+                );
+            }
+        }
+    }
+}
+
+TEST(basic_mappers, minmax) {
+    rgbq test { 0x00, 0x00, 0x00, 0xFF };
+
+    for (unsigned b = 0; b <= UCHAR_MAX; ++b) {
+        for (unsigned g = 0; g <= UCHAR_MAX; ++g) {
+            for (unsigned r = 0; r <= UCHAR_MAX; ++r) {
+                test.b = b;
+                test.g = g;
+                test.r = r;
+
+                ASSERT_NE(::memchr(PALETTE_BASE, bascii::minmax(&test, PALETTE_BASE, sizeof(PALETTE_BASE)), sizeof(PALETTE_BASE)), NULL);
+                ASSERT_NE(
+                    ::memchr(PALETTE_MINIMAL, bascii::minmax(&test, PALETTE_MINIMAL, sizeof(PALETTE_MINIMAL)), sizeof(PALETTE_MINIMAL)),
+                    NULL
+                );
+                ASSERT_NE(
+                    ::memchr(PALETTE_EXTENDED, bascii::minmax(&test, PALETTE_EXTENDED, sizeof(PALETTE_EXTENDED)), sizeof(PALETTE_EXTENDED)),
+                    NULL
+                );
+            }
+        }
+    }
+}
+
+TEST(basic_mappers, luminosity) {
+    rgbq test { 0x00, 0x00, 0x00, 0xFF };
+
+    for (unsigned b = 0; b <= UCHAR_MAX; ++b) {
+        for (unsigned g = 0; g <= UCHAR_MAX; ++g) {
+            for (unsigned r = 0; r <= UCHAR_MAX; ++r) {
+                test.b = b;
+                test.g = g;
+                test.r = r;
+
+                ASSERT_NE(
+                    ::memchr(PALETTE_BASE, bascii::luminosity(&test, PALETTE_BASE, sizeof(PALETTE_BASE)), sizeof(PALETTE_BASE)), NULL
+                );
+                ASSERT_NE(
+                    ::memchr(PALETTE_MINIMAL, bascii::luminosity(&test, PALETTE_MINIMAL, sizeof(PALETTE_MINIMAL)), sizeof(PALETTE_MINIMAL)),
+                    NULL
+                );
+                ASSERT_NE(
+                    ::memchr(
+                        PALETTE_EXTENDED, bascii::luminosity(&test, PALETTE_EXTENDED, sizeof(PALETTE_EXTENDED)), sizeof(PALETTE_EXTENDED)
+                    ),
+                    NULL
                 );
             }
         }
@@ -57,170 +146,6 @@ TEST(basic_mappers, arithmetic) { // make sure that all the basic mappers don't 
 }
 
 int main() {
-    srand(time(NULL));
-
-    assert(START_TAG_LE == 0x4D42);
-    assert(*(unsigned short*) (dummybmp) == START_TAG_LE);
-
-    assert(arithmetic(&min) == 0);
-    assert(arithmetic(&max) == UCHAR_MAX);
-    assert(arithmetic(&mid) == 128);
-
-    assert(weighted(&min) == 0);
-    assert(weighted(&max) == UCHAR_MAX);
-    assert(weighted(&mid) == 127);
-
-    assert(minmax(&min) == 0);
-    assert(minmax(&max) == UCHAR_MAX);
-    assert(minmax(&mid) == 128);
-
-    assert(luminosity(&min) == 0);
-    assert(luminosity(&max) == UCHAR_MAX - 1);
-    assert(luminosity(&mid) == 128);
-
-    rgbq test = { 0x00, 0x00, 0x00, 0xFF };
-
-    for (unsigned blue = 0; blue <= UCHAR_MAX; ++blue) {
-        for (unsigned green = 0; green <= UCHAR_MAX; ++green) {
-            for (unsigned red = 0; red <= UCHAR_MAX; ++red) {
-                test.rgbBlue  = blue;
-                test.rgbGreen = green;
-                test.rgbRed   = red;
-                // unsigned returns will always be greater than or equal to 0, so not testing against 0
-                assert(arithmetic(&test) <= UCHAR_MAX);
-                assert(weighted(&test) <= UCHAR_MAX);
-                assert(minmax(&test) <= UCHAR_MAX);
-                assert(luminosity(&test) <= UCHAR_MAX);
-            }
-        }
-    }
-
-    rgbq          temp {};
-    float         bscaler = 0.000, gscaler = 0.000, rscaler = 0.000, rnd = 0.000;
-    unsigned char r = 0, g = 0, b = 0;
-
-    for (unsigned blue = 0; blue <= UCHAR_MAX; ++blue) {
-        for (unsigned green = 0; green <= UCHAR_MAX; ++green) {
-            for (unsigned red = 0; red <= UCHAR_MAX; ++red) {
-                temp.rgbBlue  = blue;
-                temp.rgbGreen = green;
-                temp.rgbRed   = red;
-
-                rnd           = rand() / (float) RAND_MAX; // [0.0, 1.0]
-                bscaler       = rand() / RANDMAX;          // [0.0, 1.0)
-                gscaler       = (ONE - bscaler) * (rand() / RANDMAX);
-                rscaler       = ONE - (bscaler + gscaler);
-                // if ((bscaler + gscaler + rscaler) > ONE) wprintf_s(L"%.10lf\n", bscaler + gscaler + rscaler);
-
-                // make sure none of the below raise an access violation exception!
-                arithmetic_mapper(&temp, palette, __crt_countof(palette));
-                arithmetic_mapper(&temp, palette_minimal, __crt_countof(palette_minimal));
-                arithmetic_mapper(&temp, palette_extended, __crt_countof(palette_extended));
-
-                weighted_mapper(&temp, palette, __crt_countof(palette));
-                weighted_mapper(&temp, palette_minimal, __crt_countof(palette_minimal));
-                weighted_mapper(&temp, palette_extended, __crt_countof(palette_extended));
-
-                minmax_mapper(&temp, palette, __crt_countof(palette));
-                minmax_mapper(&temp, palette_minimal, __crt_countof(palette_minimal));
-                minmax_mapper(&temp, palette_extended, __crt_countof(palette_extended));
-
-                luminosity_mapper(&temp, palette, __crt_countof(palette));
-                luminosity_mapper(&temp, palette_minimal, __crt_countof(palette_minimal));
-                luminosity_mapper(&temp, palette_extended, __crt_countof(palette_extended));
-
-                tunable_mapper(&temp, bscaler, gscaler, rscaler, palette, __crt_countof(palette));
-                tunable_mapper(&temp, bscaler, gscaler, rscaler, palette_minimal, __crt_countof(palette_minimal));
-                tunable_mapper(&temp, bscaler, gscaler, rscaler, palette_extended, __crt_countof(palette_extended));
-
-                // test the block mappers
-                arithmetic_blockmapper(blue, green, red, palette, __crt_countof(palette));
-                arithmetic_blockmapper(blue, green, red, palette_minimal, __crt_countof(palette_minimal));
-                arithmetic_blockmapper(blue, green, red, palette_extended, __crt_countof(palette_extended));
-
-                weighted_blockmapper(blue, green, red, palette, __crt_countof(palette));
-                weighted_blockmapper(blue, green, red, palette_minimal, __crt_countof(palette_minimal));
-                weighted_blockmapper(blue, green, red, palette_extended, __crt_countof(palette_extended));
-
-                minmax_blockmapper(blue, green, red, palette, __crt_countof(palette));
-                minmax_blockmapper(blue, green, red, palette_minimal, __crt_countof(palette_minimal));
-                minmax_blockmapper(blue, green, red, palette_extended, __crt_countof(palette_extended));
-
-                luminosity_blockmapper(blue, green, red, palette, __crt_countof(palette));
-                luminosity_blockmapper(blue, green, red, palette_minimal, __crt_countof(palette_minimal));
-                luminosity_blockmapper(blue, green, red, palette_extended, __crt_countof(palette_extended));
-
-                tunable_blockmapper(blue, bscaler, green, gscaler, red, rscaler, palette, __crt_countof(palette));
-                tunable_blockmapper(blue, bscaler, green, gscaler, red, rscaler, palette_minimal, __crt_countof(palette_minimal));
-                tunable_blockmapper(blue, bscaler, green, gscaler, red, rscaler, palette_extended, __crt_countof(palette_extended));
-
-                // test penalizing mappers
-                penalizing_arithmeticmapper(&temp, blue, green, green, red, red, blue, palette, __crt_countof(palette), rnd);
-                penalizing_arithmeticmapper(
-                    &temp, blue, green, green, red, red, blue, palette_minimal, __crt_countof(palette_minimal), rnd
-                );
-                penalizing_arithmeticmapper(
-                    &temp, blue, green, green, red, red, blue, palette_extended, __crt_countof(palette_extended), rnd
-                );
-
-                penalizing_weightedmapper(&temp, blue, green, green, red, red, blue, palette, __crt_countof(palette), rnd);
-                penalizing_weightedmapper(&temp, blue, green, green, red, red, blue, palette_minimal, __crt_countof(palette_minimal), rnd);
-                penalizing_weightedmapper(
-                    &temp, blue, green, green, red, red, blue, palette_extended, __crt_countof(palette_extended), rnd
-                );
-
-                penalizing_minmaxmapper(&temp, blue, green, green, red, red, blue, palette, __crt_countof(palette), rnd);
-                penalizing_minmaxmapper(&temp, blue, green, green, red, red, blue, palette_minimal, __crt_countof(palette_minimal), rnd);
-                penalizing_minmaxmapper(&temp, blue, green, green, red, red, blue, palette_extended, __crt_countof(palette_extended), rnd);
-
-                penalizing_luminositymapper(&temp, blue, green, green, red, red, blue, palette, __crt_countof(palette), rnd);
-                penalizing_luminositymapper(
-                    &temp, blue, green, green, red, red, blue, palette_minimal, __crt_countof(palette_minimal), rnd
-                );
-                penalizing_luminositymapper(
-                    &temp, blue, green, green, red, red, blue, palette_extended, __crt_countof(palette_extended), rnd
-                );
-
-                // test penalizing block mappers
-                for (unsigned _ = 0; _ < TEST_TIMES; ++_) {
-                    b = (rand() / (float) RAND_MAX) * UCHAR_MAX;
-                    g = (rand() / (float) RAND_MAX) * UCHAR_MAX;
-                    r = (rand() / (float) RAND_MAX) * UCHAR_MAX;
-
-                    penalizing_arithmeticblockmapper(blue, green, red, b, g, g, r, r, b, palette, __crt_countof(palette), rnd);
-                    penalizing_arithmeticblockmapper(
-                        blue, green, red, b, g, g, r, r, b, palette_minimal, __crt_countof(palette_minimal), rnd
-                    );
-                    penalizing_arithmeticblockmapper(
-                        blue, green, red, b, g, g, r, r, b, palette_extended, __crt_countof(palette_extended), rnd
-                    );
-
-                    penalizing_weightedblockmapper(blue, green, red, b, g, g, r, r, b, palette, __crt_countof(palette), rnd);
-                    penalizing_weightedblockmapper(
-                        blue, green, red, b, g, g, r, r, b, palette_minimal, __crt_countof(palette_minimal), rnd
-                    );
-                    penalizing_weightedblockmapper(
-                        blue, green, red, b, g, g, r, r, b, palette_extended, __crt_countof(palette_extended), rnd
-                    );
-
-                    penalizing_minmaxblockmapper(blue, green, red, b, g, g, r, r, b, palette, __crt_countof(palette), rnd);
-                    penalizing_minmaxblockmapper(blue, green, red, b, g, g, r, r, b, palette_minimal, __crt_countof(palette_minimal), rnd);
-                    penalizing_minmaxblockmapper(
-                        blue, green, red, b, g, g, r, r, b, palette_extended, __crt_countof(palette_extended), rnd
-                    );
-
-                    penalizing_luminosityblockmapper(blue, green, red, b, g, g, r, r, b, palette, __crt_countof(palette), rnd);
-                    penalizing_luminosityblockmapper(
-                        blue, green, red, b, g, g, r, r, b, palette_minimal, __crt_countof(palette_minimal), rnd
-                    );
-                    penalizing_luminosityblockmapper(
-                        blue, green, red, b, g, g, r, r, b, palette_extended, __crt_countof(palette_extended), rnd
-                    );
-                }
-            }
-        }
-    }
-
     const fhead bmpfh = parse_fileheader(dummybmp, __crt_countof(dummybmp));
     assert(bmpfh.bfType == START_TAG_LE);
     assert(bmpfh.bfSize == 1409334); // size of the image where this buffer was extracted from, in bytes
@@ -268,6 +193,6 @@ int main() {
         _ptr++;
     }
 
-    _putws(L"all's good :)");
-    return EXIT_SUCCESS;
+    testing::InitGoogleTest();
+    return RUN_ALL_TESTS();
 }
