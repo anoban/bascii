@@ -32,7 +32,7 @@ __This tool is designed to handle native `Windows` bitmap files (bitmaps native 
 - When the bitmaps are too big to map each pixel to a character, a different array of mappers are available in `<utils.h>` that will group pixels into square blocks, average over the colour values of the pixels within each block, and map those block averages to a character. These apply the same mathematical formulae as the mappers above, but to block averages.
 
     ```C
-    static inline char __attribute__((always_inline)) arithmetic_blockmapper (float b, float g, float r, const char* const palette, unsigned plength);
+    static inline char __attribute__((always_inline)) arithmetic_blockmapper(float b, float g, float r, const char* const palette, unsigned plength);
     
     static inline char __attribute__((always_inline)) weighted_blockmapper(...);
     
@@ -54,6 +54,7 @@ __This tool is designed to handle native `Windows` bitmap files (bitmaps native 
 <div><img src="./images/readme/vendetta-wallpaper.jpg"  width=45%> <img src="./images/readme/vendetta.jpg" width=45%></div>
 <div><img src="./images/readme/ginger_woman.jpg"  width=45%> <img src="./images/readme/ginger.jpg" width=45%></div>
 <div><img src="./images/readme/butterflies_2.jpg"  width=45%> <img src="./images/readme/butterflies.jpg" width=45%></div>
+<div><img src="./images/readme/toukiden-2-nene.bmp"  width=45%> <img src="./images/readme/toukiden.jpg" width=45%></div>
 
 <br>
 
