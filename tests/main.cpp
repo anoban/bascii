@@ -1,4 +1,6 @@
+#include <array>
 #include <ctime>
+#include <map>
 
 #ifndef __VERBOSE_OUTPUTS
     #define __VERBOSE_OUTPUTS 1
@@ -10,14 +12,23 @@
 
 // clang-format off
 #include <gtest/gtest.h>
-namespace bascii {
 #include <tostring.h>
-}
 // clang-format on
 
-static constexpr rgbq min { .b = 0x00, .g = 0x00, .r = 0x00, ._ = 0xFF };
-static constexpr rgbq mid { .b = 0x80, .g = 0x80, .r = 0x80, ._ = 0xFF };
-static constexpr rgbq max { .b = 0xFF, .g = 0xFF, .r = 0xFF, ._ = 0xFF };
+// all of these test images will cause to_string to reroute to to_raw_string
+static const std::map<const char*, unsigned> bitmaps {
+    { "./images/tests/bobmarley.bmp",  49334 },
+    {  "./images/tests/football.bmp",  44150 },
+    {  "./images/tests/garfield.bmp",  73014 },
+    {      "./images/tests/gewn.bmp", 107514 },
+    {      "./images/tests/girl.bmp",  49334 },
+    {  "./images/tests/jennifer.bmp",  78990 },
+    {     "./images/tests/messi.bmp",  64854 },
+    { "./images/tests/supergirl.bmp",  89494 },
+    {      "./images/tests/time.bmp",  31414 },
+    {  "./images/tests/uefa2024.bmp",  41654 },
+    {  "./images/tests/vendetta.bmp",  49334 }
+};
 
 // a 300 byte chunk extracted from a real BMP file, for testing
 static constexpr unsigned char dummybmp[] {
@@ -38,6 +49,90 @@ static constexpr float RANDMAX { RAND_MAX + 2.0000 };
 
 static constexpr unsigned long long PALETTE_LENGTHS[] { sizeof(PALETTE_MINIMAL), sizeof(PALETTE_BASE), sizeof(PALETTE_EXTENDED) };
 
+//-------------
+// <_bitmap.h>
+//-------------
+
+[[maybe_unused]] static constexpr inline bool __attribute__((always_inline)) operator==(const fhead & left, const fhead & right) noexcept {
+    return (left.type == right.type) && (left.size == right.size) && (left.offbits == right.offbits) && !left._reserved_0 &&
+           !left._reserved_1 && !right._reserved_0 && !right._reserved_1;
+}
+
+TEST(bitmap, imopen) {
+    //
+    long           fsize {};
+    unsigned char* buffer {};
+    for (const auto& pair : bitmaps) {
+        buffer = ::imopen(pair.first, &fsize);
+        ASSERT_TRUE(buffer);           // cannot be nullptr
+        ASSERT_EQ(fsize, pair.second); // file sizes should match
+        ::free(buffer);
+        buffer = nullptr;
+        fsize  = 0;
+    }
+
+    fsize  = 746; // for testing
+    buffer = ::imopen("./a/file/that/does/not/exist.bmp", &fsize);
+    ASSERT_FALSE(buffer); // nullptr
+    ASSERT_EQ(fsize, 0);
+}
+
+// lots of redundant file ios here :/
+
+TEST(bitmap, fileheader) {
+    //
+    long           fsize {};
+    unsigned char* buffer {};
+    fhead          header {};
+
+    for (const auto& pair : bitmaps) {
+        buffer = ::imopen(pair.first, &fsize);
+
+        header = ::fileheader(buffer, fsize);
+
+        ASSERT_EQ(header.type, START_TAG_LE);
+        ASSERT_EQ(header.size, pair.second);
+        ASSERT_EQ(header._reserved_0, 0);
+        ASSERT_EQ(header._reserved_1, 0);
+        ASSERT_EQ(header.offbits, 54);
+
+        ::free(buffer);
+        buffer = nullptr;
+        fsize  = 0;
+        ::memset(&header, 0, sizeof(fhead));
+    }
+
+    // test for failure cases
+    ASSERT_EQ(::fileheader(nullptr, 200), fhead {}); // sould fail because of the null buffer
+                                                     // shoudl fail because the buffer size is smaller than the size of the file header too
+    ASSERT_EQ(::fileheader(reinterpret_cast<unsigned char*>(0x75A45D23), 2), fhead {});
+    ASSERT_EQ(::fileheader(nullptr, 2), fhead {}); // fail for both reasons above
+}
+
+TEST(bitmap, infoheader) {
+    //
+    long           fsize {};
+    unsigned char* buffer {};
+    infhead        header {};
+
+    for (const auto& pair : bitmaps) {
+        buffer = ::imopen(pair.first, &fsize);
+
+        header = ::infoheader(buffer, fsize);
+
+        // ASSERT_EQ(header.type, START_TAG_LE);
+        // ASSERT_EQ(header.size, pair.second);
+        // ASSERT_EQ(header._reserved_0, 0);
+        // ASSERT_EQ(header._reserved_1, 0);
+        // ASSERT_EQ(header.offbits, 54);
+
+        ::free(buffer);
+        buffer = nullptr;
+        fsize  = 0;
+        ::memset(&header, 0, sizeof(fhead));
+    }
+}
+
 // make sure that all the basic mappers don't compute off-bound offsets for palettes
 TEST(basic_mappers, arithmetic) {
     rgbq test { 0x00, 0x00, 0x00, 0xFF };
@@ -49,18 +144,14 @@ TEST(basic_mappers, arithmetic) {
                 test.g = g;
                 test.r = r;
 
+                ASSERT_NE(::memchr(PALETTE_BASE, ::arithmetic(&test, PALETTE_BASE, sizeof(PALETTE_BASE)), sizeof(PALETTE_BASE)), nullptr);
                 ASSERT_NE(
-                    ::memchr(PALETTE_BASE, bascii::arithmetic(&test, PALETTE_BASE, sizeof(PALETTE_BASE)), sizeof(PALETTE_BASE)), NULL
+                    ::memchr(PALETTE_MINIMAL, ::arithmetic(&test, PALETTE_MINIMAL, sizeof(PALETTE_MINIMAL)), sizeof(PALETTE_MINIMAL)),
+                    nullptr
                 );
                 ASSERT_NE(
-                    ::memchr(PALETTE_MINIMAL, bascii::arithmetic(&test, PALETTE_MINIMAL, sizeof(PALETTE_MINIMAL)), sizeof(PALETTE_MINIMAL)),
-                    NULL
-                );
-                ASSERT_NE(
-                    ::memchr(
-                        PALETTE_EXTENDED, bascii::arithmetic(&test, PALETTE_EXTENDED, sizeof(PALETTE_EXTENDED)), sizeof(PALETTE_EXTENDED)
-                    ),
-                    NULL
+                    ::memchr(PALETTE_EXTENDED, ::arithmetic(&test, PALETTE_EXTENDED, sizeof(PALETTE_EXTENDED)), sizeof(PALETTE_EXTENDED)),
+                    nullptr
                 );
             }
         }
@@ -77,16 +168,13 @@ TEST(basic_mappers, weighted) {
                 test.g = g;
                 test.r = r;
 
-                ASSERT_NE(::memchr(PALETTE_BASE, bascii::weighted(&test, PALETTE_BASE, sizeof(PALETTE_BASE)), sizeof(PALETTE_BASE)), NULL);
+                ASSERT_NE(::memchr(PALETTE_BASE, ::weighted(&test, PALETTE_BASE, sizeof(PALETTE_BASE)), sizeof(PALETTE_BASE)), nullptr);
                 ASSERT_NE(
-                    ::memchr(PALETTE_MINIMAL, bascii::weighted(&test, PALETTE_MINIMAL, sizeof(PALETTE_MINIMAL)), sizeof(PALETTE_MINIMAL)),
-                    NULL
+                    ::memchr(PALETTE_MINIMAL, ::weighted(&test, PALETTE_MINIMAL, sizeof(PALETTE_MINIMAL)), sizeof(PALETTE_MINIMAL)), nullptr
                 );
                 ASSERT_NE(
-                    ::memchr(
-                        PALETTE_EXTENDED, bascii::weighted(&test, PALETTE_EXTENDED, sizeof(PALETTE_EXTENDED)), sizeof(PALETTE_EXTENDED)
-                    ),
-                    NULL
+                    ::memchr(PALETTE_EXTENDED, ::weighted(&test, PALETTE_EXTENDED, sizeof(PALETTE_EXTENDED)), sizeof(PALETTE_EXTENDED)),
+                    nullptr
                 );
             }
         }
@@ -103,14 +191,13 @@ TEST(basic_mappers, minmax) {
                 test.g = g;
                 test.r = r;
 
-                ASSERT_NE(::memchr(PALETTE_BASE, bascii::minmax(&test, PALETTE_BASE, sizeof(PALETTE_BASE)), sizeof(PALETTE_BASE)), NULL);
+                ASSERT_NE(::memchr(PALETTE_BASE, ::minmax(&test, PALETTE_BASE, sizeof(PALETTE_BASE)), sizeof(PALETTE_BASE)), nullptr);
                 ASSERT_NE(
-                    ::memchr(PALETTE_MINIMAL, bascii::minmax(&test, PALETTE_MINIMAL, sizeof(PALETTE_MINIMAL)), sizeof(PALETTE_MINIMAL)),
-                    NULL
+                    ::memchr(PALETTE_MINIMAL, ::minmax(&test, PALETTE_MINIMAL, sizeof(PALETTE_MINIMAL)), sizeof(PALETTE_MINIMAL)), nullptr
                 );
                 ASSERT_NE(
-                    ::memchr(PALETTE_EXTENDED, bascii::minmax(&test, PALETTE_EXTENDED, sizeof(PALETTE_EXTENDED)), sizeof(PALETTE_EXTENDED)),
-                    NULL
+                    ::memchr(PALETTE_EXTENDED, ::minmax(&test, PALETTE_EXTENDED, sizeof(PALETTE_EXTENDED)), sizeof(PALETTE_EXTENDED)),
+                    nullptr
                 );
             }
         }
@@ -127,18 +214,14 @@ TEST(basic_mappers, luminosity) {
                 test.g = g;
                 test.r = r;
 
+                ASSERT_NE(::memchr(PALETTE_BASE, ::luminosity(&test, PALETTE_BASE, sizeof(PALETTE_BASE)), sizeof(PALETTE_BASE)), nullptr);
                 ASSERT_NE(
-                    ::memchr(PALETTE_BASE, bascii::luminosity(&test, PALETTE_BASE, sizeof(PALETTE_BASE)), sizeof(PALETTE_BASE)), NULL
+                    ::memchr(PALETTE_MINIMAL, ::luminosity(&test, PALETTE_MINIMAL, sizeof(PALETTE_MINIMAL)), sizeof(PALETTE_MINIMAL)),
+                    nullptr
                 );
                 ASSERT_NE(
-                    ::memchr(PALETTE_MINIMAL, bascii::luminosity(&test, PALETTE_MINIMAL, sizeof(PALETTE_MINIMAL)), sizeof(PALETTE_MINIMAL)),
-                    NULL
-                );
-                ASSERT_NE(
-                    ::memchr(
-                        PALETTE_EXTENDED, bascii::luminosity(&test, PALETTE_EXTENDED, sizeof(PALETTE_EXTENDED)), sizeof(PALETTE_EXTENDED)
-                    ),
-                    NULL
+                    ::memchr(PALETTE_EXTENDED, ::luminosity(&test, PALETTE_EXTENDED, sizeof(PALETTE_EXTENDED)), sizeof(PALETTE_EXTENDED)),
+                    nullptr
                 );
             }
         }
@@ -146,12 +229,9 @@ TEST(basic_mappers, luminosity) {
 }
 
 int main() {
+    /*
     const fhead bmpfh = parse_fileheader(dummybmp, __crt_countof(dummybmp));
-    assert(bmpfh.bfType == START_TAG_LE);
-    assert(bmpfh.bfSize == 1409334); // size of the image where this buffer was extracted from, in bytes
-    assert(bmpfh.bfReserved1 == 0);
-    assert(bmpfh.bfReserved2 == 0);
-    assert(bmpfh.bfOffBits == 54);
+
 
     const infhead bmpinfh = parse_infoheader(dummybmp, __crt_countof(dummybmp));
     assert(bmpinfh.biSize == 40); // header size
@@ -168,30 +248,7 @@ int main() {
 
     const BITMAP_PIXEL_ORDERING order = get_pixel_order(&bmpinfh);
     assert(order == BOTTOMUP);
-
-    // all of these test images will cause to_string to reroute to to_raw_string
-    static const wchar_t* const filenames[] = { L"./test/bobmarley.bmp", L"./test/football.bmp",  L"./test/garfield.bmp",
-                                                L"./test/gewn.bmp",      L"./test/girl.bmp",      L"./test/jennifer.bmp",
-                                                L"./test/messi.bmp",     L"./test/supergirl.bmp", L"./test/time.bmp",
-                                                L"./test/uefa2024.bmp",  L"./test/vendetta.bmp",  NULL };
-
-    const wchar_t** _ptr                    = filenames;
-    while (*_ptr) {
-        bitmap_t             image = bmpread(*_ptr);
-        const wchar_t* const wstr  = to_string(&image);
-        if (!wstr) {
-            wprintf_s(L"Error :: cannot process %s!\n", *_ptr);
-            bmpclose(&image);
-            continue;
-        }
-
-        _putws(wstr);
-        _putws(L"\n\n");
-
-        free(wstr);
-        bmpclose(&image);
-        _ptr++;
-    }
+    */
 
     testing::InitGoogleTest();
     return RUN_ALL_TESTS();

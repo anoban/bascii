@@ -1,7 +1,5 @@
 #pragma once
 
-#define ONE 1.000000000
-
 #include <limits.h>
 #include <math.h>
 

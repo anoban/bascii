@@ -31,7 +31,7 @@ static inline unsigned char* imopen(const char* const fpath, long* const nreadby
         goto CLOSE_AND_RETURN;
     }
 
-    if (!(buffer = malloc(filestat.st_size))) { // caller is responsible for freeing this buffer
+    if (!(buffer = (unsigned char*) malloc(filestat.st_size))) { // caller is responsible for freeing this buffer
         fprintf(stderr, "Call to new() failed inside %s at line %d!\n", __FUNCTION__, __LINE__);
         goto CLOSE_AND_RETURN;
     }
@@ -41,7 +41,7 @@ static inline unsigned char* imopen(const char* const fpath, long* const nreadby
         assert(nbytes == filestat.st_size); // double checking
     } else {
         fprintf(stderr, "Call to read() failed inside %s at line %d!; errno %d\n", __FUNCTION__, __LINE__, errno);
-        free(buffer);
+        free((void*) buffer);
         buffer = NULL;
     }
     // then, fall through the CLOSE_AND_RETURN label
@@ -63,6 +63,10 @@ typedef struct {
 
 // order of pixels in the BMP pixel buffer
 typedef enum { TOPDOWN, BOTTOMUP } BITMAP_PIXEL_ORDERING;
+
+static inline BITMAP_PIXEL_ORDERING __attribute__((always_inline)) pixelorder(const infhead* const header) {
+    return (header->height >= 0) ? BOTTOMUP : TOPDOWN;
+}
 
 // types of compressions used in BMP files
 typedef enum { RGB, RLE8, RLE4, BITFIELDS, UNKNOWN } BITMAP_COMPRESSION_KIND;
@@ -89,7 +93,7 @@ static inline fhead fileheader(const unsigned char* const buffer, const unsigned
             __FILE__,
             __LINE__
         );
-        free(buffer);
+        free((void*) buffer);
         return header;
     }
 
@@ -118,7 +122,7 @@ static inline infhead infoheader(const unsigned char* const buffer, const unsign
             __FILE__,
             __LINE__
         );
-        free(buffer);
+        free((void*) buffer);
         return header;
     }
 
@@ -135,10 +139,6 @@ static inline infhead infoheader(const unsigned char* const buffer, const unsign
     header.imp_clrs    = *((unsigned*) (buffer + 50U));
 
     return header;
-}
-
-static inline BITMAP_PIXEL_ORDERING __attribute__((always_inline)) pixelorder(const infhead* const header) {
-    return (header->height >= 0) ? BOTTOMUP : TOPDOWN;
 }
 
 // reads in a bmp file from disk and deserializes it into a bitmap_t struct
@@ -158,13 +158,13 @@ static inline bitmap bmpread(const char* const filepath) {
 
     image.fileheader = file_header;
     image.infoheader = info_header;
-    image.buffer     = buffer;
+    image.buffer     = (unsigned char*) buffer;
     image.pixels     = (rgbq*) (buffer + 54);
 
     return image;
 }
 
-// use this to cleanup a bitmap_t after its use
+// use this to cleanup a bitmap after its use
 static inline void __attribute__((always_inline)) bmpclose(bitmap* const image) {
     free(image->buffer);
     memset(image, 0, sizeof(bitmap));
