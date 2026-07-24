@@ -13,7 +13,7 @@ __This tool is designed to handle native `Windows` bitmap files (bitmaps native 
 
 - Users can pick any palette by editing the `BASE_PALETTE` and `BLOCK_PALETTE` preprocessor definitions in `<tostring.h>`. These two don't need to be the same.
 
-- For the `RGB` to ascii conversion, a string of mappers are available in `<utils.h>`.
+- For the `RGB` pixel to ascii character conversion, a set of functions are available in `<utils.h>`.
 
     ```C
     // uses the arithmetic average of the red, green and blue values of pixels
@@ -29,7 +29,7 @@ __This tool is designed to handle native `Windows` bitmap files (bitmaps native 
     static inline char __attribute__((always_inline)) luminosity(...);
     ```
 
-- When the bitmaps are too big to map each pixel to a character, a different array of mappers are available in `<utils.h>` that will group pixels into square blocks, average over the colour values of the pixels within each block, and map those block averages to a character. These apply the same mathematical formulae as the mappers above, but to block averages.
+- When the bitmaps are too big to map each pixel to a character (i.e. in the case where the text representation won't fit in the console of a regular screen - 140 characters wide), a different array of mappers are available in `<utils.h>` that will group pixels into square blocks, average over the colour values of the pixels within each block and map those block averages to a character. These apply the same mathematical formulae as the mappers above, but to block averages.
 
     ```C
     static inline char __attribute__((always_inline)) arithmetic_blockmapper(float b, float g, float r, const char* const palette, unsigned plength);
@@ -44,9 +44,9 @@ __This tool is designed to handle native `Windows` bitmap files (bitmaps native 
 
 - Users can pick any mappers by editing the `BASE_MAPPER` and `BLOCK_MAPPER` preprocessor definitions in `<tostring.h>`. These two do not need to be the same.
 
-- However, when using this library, the dispatch details about the mappers aren't necessary as the `to_string()` function will determine if downscaling is required, at runtime and will dispatch the image to the right character mapper.
+- However, when using this library, the dispatch details about the mappers aren't necessary as the `to_string()` function will determine if downscaling is required, at runtime based on the image dimensions and will dispatch the image to the right functions.
+
 ------
-<br>
 
 ### ___Examples___
 
@@ -56,8 +56,6 @@ __This tool is designed to handle native `Windows` bitmap files (bitmaps native 
 <div><img src="./images/readme/butterflies_2.jpg"  width=45%> <img src="./images/readme/butterflies.jpg" width=45%></div>
 <div><img src="./images/readme/toukiden-2-nene.bmp"  width=45%> <img src="./images/readme/toukiden.jpg" width=45%></div>
 
-<br>
-
 ### ___Caveats___
 
 - Doesn't support any other image formats.
@@ -66,8 +64,9 @@ __This tool is designed to handle native `Windows` bitmap files (bitmaps native 
 - Best results with colour images are obtained when there's a stark contrast between the object of interest and the background.
 - Monospaced typefaces are critical to get decent renders, non-monospaced typefaces will probably make the patterns incoherent and indistinguishable!
 - The distortion in the image dimension during ascii mapping comes from the inherent non-square shaped nature of most typefaces.
-Even with monospaced typefaces, characters are taller than they are wide! This unfortunately makes the ascii representations seem vertically stretched :(
+- Even with monospaced typefaces, characters are taller than they are wide! This unfortunately makes the ascii representations look vertically stretched (as shown in the examples) :confounded:
 
-<br>
+   
+      
 
 ___For a comprehensive explanation of the implementation, browse the source code, it is thoroughly annotated!.___
