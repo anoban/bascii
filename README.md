@@ -1,4 +1,4 @@
-## ___Windows BMP images to ASCII strings___
+## ___Windows bitmaps to ASCII texts___
 --------------
 
 __This tool is designed to handle native `Windows` bitmap files (bitmaps native to Windows OS, converts from `Microsoft Photos`, etc.) on `Linux` machines and will not handle bitmaps serialized by `Linux` based softwares such as `GIMP`, `ImageMagick` and the likes unless they meticulously match the binary format of native `Windows` bitmaps.__
