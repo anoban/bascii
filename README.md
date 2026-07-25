@@ -50,6 +50,9 @@ __This tool is designed to handle native `Windows` bitmap files (bitmaps native 
 
 ### ___Examples___
 
+Using `arithmetic_blockmapper` as the character mapper and `PALETTE_EXTENDED` as the character palette.
+
+
 <div><img src="./images/readme/jennifer_lawrence.jpg"  width=45%> <img src="./images/readme/jennifer.jpg" width=45%></div>
 <div><img src="./images/readme/vendetta-wallpaper.jpg"  width=45%> <img src="./images/readme/vendetta.jpg" width=45%></div>
 <div><img src="./images/readme/ginger_woman.jpg"  width=45%> <img src="./images/readme/ginger.jpg" width=45%></div>
