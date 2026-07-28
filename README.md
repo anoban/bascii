@@ -53,11 +53,11 @@ __This tool is designed to handle native `Windows` bitmap files (bitmaps native 
 Using `arithmetic_blockmapper` as the character mapper and `PALETTE_EXTENDED` as the character palette.
 
 
-<div><img src="./images/readme/jennifer_lawrence.jpg"  width=45%> <img src="./images/readme/jennifer.jpg" width=45%></div><br>
-<div><img src="./images/readme/vendetta-wallpaper.jpg"  width=45%> <img src="./images/readme/vendetta.jpg" width=45%></div><br>
-<div><img src="./images/readme/ginger_woman.jpg"  width=45%> <img src="./images/readme/ginger.jpg" width=45%></div><br>
-<div><img src="./images/readme/butterflies_2.jpg"  width=45%> <img src="./images/readme/butterflies.jpg" width=45%></div><br>
-<div><img src="./images/readme/toukiden-2-nene.bmp"  width=45%> <img src="./images/readme/toukiden.jpg" width=45%></div><br>
+<div><img src="./images/readme/jennifer_lawrence.jpg" width=40%> <img src="./images/readme/jennifer.jpg" width=40%></div>
+<div><img src="./images/readme/vendetta-wallpaper.jpg" width=40%> <img src="./images/readme/vendetta.jpg" width=40%></div>
+<div><img src="./images/readme/ginger_woman.jpg" width=40%> <img src="./images/readme/ginger.jpg" width=40%></div>
+<div><img src="./images/readme/butterflies_2.jpg" width=40%> <img src="./images/readme/butterflies.jpg" width=40%></div>
+<div><img src="./images/readme/toukiden-2-nene.bmp" width=40%> <img src="./images/readme/toukiden.jpg" width=40%></div>
 
 ### ___Caveats___
 
