@@ -2,6 +2,15 @@
 
 #include <assert.h>
 
+// putting these here as this header is universally included in all the sources
+#ifdef __VERBOSE_OUTPUTS
+    #define __printf_verbose(...) fprintf(stderr, __VA_ARGS__)
+    #define _verbose(...)         (__VA_ARGS__)
+#else
+    #define __printf_verbose(...)
+    #define _verbose(...)
+#endif // _DEBUG
+
 // a header providing proxy definitions for some essential Win32 structs related to bitmaps
 
 // https://learn.microsoft.com/en-us/windows/win32/api/wingdi/ns-wingdi-rgbquad

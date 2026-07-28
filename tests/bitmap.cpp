@@ -16,7 +16,7 @@
 
 // all of these test images will cause to_string to reroute to to_raw_string
 static const std::map<const char* const, long> TEST_BITMAPS {
-    { "./images/tests/bobmarley.bmp",  49334 },
+    { "./images/tests/bobmarley.bmp",  49334 }, // file names and sizes in bytes
     {  "./images/tests/football.bmp",  44150 },
     {  "./images/tests/garfield.bmp",  73014 },
     {      "./images/tests/gewn.bmp", 107514 },
@@ -30,9 +30,8 @@ static const std::map<const char* const, long> TEST_BITMAPS {
 };
 
 static constexpr std::array<std::pair<int, int>, 11> TEST_BITMAPS_SHAPES {
-    // in (w, h) format - in the same order as TEST_BITMAPS
-    { { 140, 88 },
-     { 106, 104 },
+    { { 140, 88 }, // in (w, h) format - in the same order as TEST_BITMAPS
+      { 106, 104 },
      { 120, 152 },
      { 135, 199 },
      { 140, 88 },
@@ -52,6 +51,7 @@ static constexpr std::array<std::pair<int, int>, 11> TEST_BITMAPS_SHAPES {
 TEST(bitmap, imopen) {
     long           fsize {};
     unsigned char* buffer {};
+
     for (const auto& pair : TEST_BITMAPS) {
         buffer = ::imopen(pair.first, &fsize);
         ASSERT_TRUE(buffer);           // cannot be nullptr
@@ -67,7 +67,7 @@ TEST(bitmap, imopen) {
     ASSERT_EQ(fsize, 0);  // the call above to imopen should've zeroed fsize
 }
 
-// lots of redundant file ios here :(
+// lots of redundant file io here :(
 
 TEST(bitmap, fileheader) {
     long           fsize {};
@@ -76,14 +76,13 @@ TEST(bitmap, fileheader) {
 
     for (const auto& pair : TEST_BITMAPS) {
         buffer = ::imopen(pair.first, &fsize);
-
         header = ::fileheader(buffer, fsize);
 
         ASSERT_EQ(header.type, START_TAG_LE);
         ASSERT_EQ(header.size, pair.second);
         ASSERT_EQ(header._reserved_0, 0);
         ASSERT_EQ(header._reserved_1, 0);
-        ASSERT_EQ(header.offbits, 54);
+        ASSERT_EQ(header.offbits, 54U);
 
         ::free(buffer);
         buffer = nullptr;

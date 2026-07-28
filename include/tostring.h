@@ -41,7 +41,8 @@ static inline char* to_raw_string(
     const long long nchars /* 1 char for each pixel + 1 additional character for LF ('\n') at the end of each scanline */ =
         npixels + 1LL * image->infoheader.height;
 
-    char* const buffer = (char* const) malloc(nchars + 1); // and the +1 is for the NULL terminator
+    // the explicit case is just to make the C++ compiler happy during tests
+    char* const buffer = (char*) malloc(nchars + 1); // and the +1 is for the NULL terminator
     if (!buffer) {
         fprintf(stderr, "Error in function %s in file %s at line %d, memory allocation failed!\n", __FUNCTION__, __FILE__, __LINE__);
         return NULL;
@@ -189,7 +190,7 @@ static inline char* to_downscaled_string(
     // one char in our buffer will have to represent (block_w x block_h) number of RGBQUADs
     const long long nchars        = vblocks_total * (hblocks_total + 1) + 1; // saving one char for LF, the +1 is for the NULL terminator
 
-    char* const buffer            = (char* const) malloc(nchars);
+    char* const buffer            = (char*) malloc(nchars);
     if (!buffer) {
         fprintf(stderr, "Error in function %s in file %s at line %d memory allocation failed!\n", __FUNCTION__, __FILE__, __LINE__);
         return NULL;

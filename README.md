@@ -66,10 +66,6 @@ Using `arithmetic_blockmapper` as the character mapper and `PALETTE_EXTENDED` as
 - Not particularly good at capturing specific details in images, especially if the images are large and those details are represented by granular differences in colour gradients (this specificity gets lost in the black and white transformation and downscaling)
 - Best results with colour images are obtained when there's a stark contrast between the object of interest and the background.
 - Monospaced typefaces are critical to get decent renders, non-monospaced typefaces will probably make the patterns incoherent and indistinguishable!
-- The distortion in the image dimension during ascii mapping comes from the inherent non-square shaped nature of most typefaces.
-- Even with monospaced typefaces, characters are taller than they are wide! This unfortunately makes the ascii representations look vertically stretched (as shown in the examples) :confounded:
-
-   
-      
+- The distortion in the image dimension during ascii mapping comes from the inherent non-square shaped nature of most typefaces. Even with monospaced typefaces, characters are taller than they are wide! This unfortunately makes the ascii representations look vertically stretched (as shown in the examples) :confounded:
 
 ___For a comprehensive explanation of the implementation, browse the source code, it is thoroughly annotated!.___
