@@ -50,22 +50,23 @@ __This tool is designed to handle native `Windows` bitmap files (bitmaps native 
 
 ### ___Examples___
 
-Using `arithmetic_blockmapper` as the character mapper and `PALETTE_EXTENDED` as the character palette.
+Using `arithmetic_blockmapper` as the character mapper and `PALETTE_EXTENDED` as the character palette.<br>
 
 
-<div><img src="./images/readme/jennifer_lawrence.jpg" width=40%> <img src="./images/readme/jennifer.jpg" width=40%></div>
-<div><img src="./images/readme/vendetta-wallpaper.jpg" width=40%> <img src="./images/readme/vendetta.jpg" width=40%></div>
-<div><img src="./images/readme/ginger_woman.jpg" width=40%> <img src="./images/readme/ginger.jpg" width=40%></div>
-<div><img src="./images/readme/butterflies_2.jpg" width=40%> <img src="./images/readme/butterflies.jpg" width=40%></div>
-<div><img src="./images/readme/toukiden-2-nene.bmp" width=40%> <img src="./images/readme/toukiden.jpg" width=40%></div>
+<div><img src="./images/readme/jennifer_lawrence.jpg" width=45%>   <img src="./images/readme/jennifer.jpg" width=45%></div>
+<div><img src="./images/readme/vendetta-wallpaper.jpg" width=45%>   <img src="./images/readme/vendetta.jpg" width=45%></div>
+<div><img src="./images/readme/ginger_woman.jpg" width=45%>   <img src="./images/readme/ginger.jpg" width=45%></div>
+<div><img src="./images/readme/butterflies_2.jpg" width=45%>   <img src="./images/readme/butterflies.jpg" width=45%></div>
+<div><img src="./images/readme/toukiden-2-nene.bmp" width=45%>   <img src="./images/readme/toukiden.jpg" width=45%></div>
+
 
 ### ___Caveats___
 
 - Doesn't support any other image formats.
 - Only supports __Windows native bitmaps__ with bottom-up scanline ordering (majority of the `Win32` bitmaps in contemporary use are of this type). Bitmaps with top-down scanline order will result in a runtime error.
-- Not particularly good at capturing specific details in images, especially if the images are large and those details are represented by granular differences in colour gradients (this specificity gets lost in the black and white transformation and downscaling)
+- Not particularly good at capturing specific details in images, especially if the images are large and those details are represented by granular differences in colour gradients (this specificity gets lost in the black and white transformation and downscaling).
 - Best results with colour images are obtained when there's a stark contrast between the object of interest and the background.
-- Monospaced typefaces are critical to get decent renders, non-monospaced typefaces will probably make the patterns incoherent and indistinguishable!
+- Monospaced typefaces are critical to get decent renders, with non-monospaced typefaces, text lines won't align properly (i.e. two lines with 140 characters will most likely take up different lengths on the terminal), making the text renders incoherent.
 - The distortion in the image dimension during ascii mapping comes from the inherent non-square shaped nature of most typefaces. Even with monospaced typefaces, characters are taller than they are wide! This unfortunately makes the ascii representations look vertically stretched (as shown in the examples) :confounded:
 
 ___For a comprehensive explanation of the implementation, browse the source code, it is thoroughly annotated!.___
