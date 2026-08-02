@@ -3,12 +3,16 @@
 #include <assert.h>
 
 // putting these here as this header is universally included in all the sources
-#ifdef __VERBOSE_OUTPUTS
-    #define __printf_verbose(...) fprintf(stderr, __VA_ARGS__)
-    #define _verbose(...)         (__VA_ARGS__)
+#ifdef __TEST__
+    #define _testing(...) (__VA_ARGS__)
+    #if !defined(_DEBUG) || !defined(DEBUG) // when testing define _DEBUG & DEBUG for assertions to work!
+        #define _DEBUG
+        #define DEBUG
+    #endif
+    #define tprintf(...) fprintf(stderr, __VA_ARGS__) // tprintf for test printf
 #else
-    #define __printf_verbose(...)
-    #define _verbose(...)
+    #define _testing(...)
+    #define tprintf(...)
 #endif // _DEBUG
 
 // a header providing proxy definitions for some essential Win32 structs related to bitmaps

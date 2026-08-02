@@ -1,5 +1,6 @@
 #pragma once
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -177,7 +178,7 @@ static inline char* to_downscaled_string(
         |                                                                                                  |
         |                                                                                                  |
         ----- this is the last row of incomplete blocks                                                    |
-                and this block at the bottom right can be incomplete in terms of width and height ---------
+            and this block at the bottom right can be incomplete in terms of both width and height ---------
 
     */
 
@@ -196,22 +197,23 @@ static inline char* to_downscaled_string(
         return NULL;
     }
 
-#ifdef __VERBOSE_OUTPUTS
-    fprintf(stderr, "Width - %d, Height - %d\n", image->infoheader.width, image->infoheader.height);
-    fprintf(stderr, "Size of the square block - %lld\n", block_dim);
+    tprintf("Width - %d, Height - %d\n", image->infoheader.width, image->infoheader.height);
+    tprintf("Size of the square block - %lld\n", block_dim);
 
     // THESE DIMENSIONS DO NOT APPLY TO THE INCOMPLETE BLOCK AT THE BOTTOM RIGHT CORNER - WHICH CAN POSSIBLY HAVE A WIDTH AND A HEIGHT BOTH LESS THAN THE BLOCK DIMENSION
-    fprintf(stderr, "Number of blocks along the x axis - %lld\n", hblocks_total);
-    fprintf(stderr, "Dimension of the incomplete blocks in the rightmost column (w, h) - (%lld, %lld)\n", incbwidth_r, block_dim);
+    tprintf("Number of blocks along the x axis - %lld\n", hblocks_total);
+    tprintf("Dimension of the incomplete blocks in the rightmost column (w, h) - (%lld, %lld)\n", incbwidth_r, block_dim);
 
-    fprintf(stderr, "Number of blocks along the y axis - %lld\n", vblocks_total);
-    fprintf(stderr, "Dimension of the incomplete blocks in the bottom row (w, h) - (%lld, %lld)\n", block_dim, incbheight_b);
-#endif
+    tprintf("Number of blocks along the y axis - %lld\n", vblocks_total);
+    tprintf("Dimension of the incomplete blocks in the bottom row (w, h) - (%lld, %lld)\n", block_dim, incbheight_b);
 
     double    avgb = 0.0, avgg = 0.0, avgr = 0.0; // per block averages of the rgbBlue, rgbGreen and rgbRed values
     long long caret = 0, offset = 0, col = 0, row = 0;
-    long long nbfull = 0, nbincomplete = 0, pixelcount_complete_block = 0; // number of full, incomplete blocks mapped to characters
+    long long pixelcount_complete_block = 0; // number of full, incomplete blocks mapped to characters
 
+#ifdef __TEST__
+    long long nbfull = 0, nbincomplete = 0;
+#endif
     // true if the image width is not divisible by CONSOLE_WIDTH without remainders
     const bool hincomplete = image->infoheader.width % CONSOLE_WIDTH;
     // true if the image height is not divisible by block_d without remainders
@@ -229,13 +231,13 @@ static inline char* to_downscaled_string(
                     avgg   += image->pixels[offset].g;
                     avgr   += image->pixels[offset].r;
 
-                    _verbose(pixelcount_complete_block++);
+                    _testing(pixelcount_complete_block++);
                 }
             }
 
-            _verbose(nbfull++);
+            _testing(nbfull++);
             assert(pixelcount_complete_block == block_dim * block_dim);
-            _verbose(pixelcount_complete_block = 0);
+            _testing(pixelcount_complete_block = 0);
 
             avgb /= blocksize;
             avgg /= blocksize;
@@ -260,13 +262,13 @@ static inline char* to_downscaled_string(
                     avgg   += image->pixels[offset].g;
                     avgr   += image->pixels[offset].r;
 
-                    _verbose(pixelcount_complete_block++);
+                    _testing(pixelcount_complete_block++);
                 }
             }
 
-            _verbose(nbincomplete++);
+            _testing(nbincomplete++);
             assert(pixelcount_complete_block == incomplete_blocksize_right); // fails
-            _verbose(pixelcount_complete_block = 0);
+            _testing(pixelcount_complete_block = 0);
 
             avgb /= incomplete_blocksize_right;
             avgg /= incomplete_blocksize_right;
@@ -281,13 +283,11 @@ static inline char* to_downscaled_string(
         buffer[caret++] = L'\n';
     }
 
-#ifdef __VERBOSE_OUTPUTS
-    fprintf(stderr, "%llu complete blocks have been processed!\n", nbfull);
-    fprintf(stderr, "%llu incomplete blocks at the right have been processed\n", nbincomplete);
-#endif
+    tprintf("%llu complete blocks have been processed!\n", nbfull);
+    tprintf("%llu incomplete blocks at the right have been processed\n", nbincomplete);
 
     assert(row < block_dim);
-    _verbose(nbincomplete = 0);
+    _testing(nbincomplete = 0);
 
     //--------------------------------------------------------
     // for the last row of incomplete blocks, if present
@@ -309,9 +309,9 @@ static inline char* to_downscaled_string(
             avgg /= incomplete_blocksize_bottom;
             avgr /= incomplete_blocksize_bottom;
 
-            _verbose(nbincomplete++);
-
+            _testing(nbincomplete++);
             assert(avgb <= 255.00 && avgg <= 255.00 && avgr <= 255.00);
+
             buffer[caret++] = mapper(avgb, avgg, avgr, palette, psize);
             avgb = avgg = avgr = 0.000; // reset the block averages
         }
@@ -319,14 +319,14 @@ static inline char* to_downscaled_string(
         buffer[caret++] = '\n';
     }
 
+    // even after all of this, we do not map the last incomplete block (if there were one) to a character
+    // it gets substituted with a null terminator
     buffer[caret++] = 0; // using the last byte as null terminator
 
     // now caret == nchars, so an attempt to write at caret will now raise an access violation exception or a heap corruption error
-#ifdef __VERBOSE_OUTPUTS
-    fprintf(stderr, "%llu incomplete blocks at the bottom have been processed\n", nbincomplete);
-    fprintf(stderr, "caret - %lld, nchars - %lld\n", caret, nchars);
-#endif
 
+    tprintf("%llu incomplete blocks at the bottom have been processed\n", nbincomplete);
+    tprintf("caret - %lld, nchars - %lld\n", caret, nchars);
     assert(caret == nchars);
 
     return buffer;
@@ -334,6 +334,14 @@ static inline char* to_downscaled_string(
 
 // an image width dependent dispatcher for to_raw_string and to_downscaled_string, that actually do the heavy lifting
 static inline char* to_string(const bitmap* const image) {
+    // make sure these macros are valid
+    static_assert(BASE_PALETTE != NULL);
+    static_assert(BLOCK_PALETTE != NULL);
+    static_assert(BASE_MAPPER != NULL);
+    static_assert(BLOCK_MAPPER != NULL);
+    static_assert(sizeof(BASE_PALETTE) >= sizeof(PALETTE_BASE)); // must be greater than or equal to the size of the smallest palette
+    static_assert(sizeof(BLOCK_PALETTE) >= sizeof(PALETTE_BASE));
+
     if (image->infoheader.width <= CONSOLE_WIDTH) return to_raw_string(image, BASE_MAPPER, BASE_PALETTE, sizeof(BASE_PALETTE));
     return to_downscaled_string(image, BLOCK_MAPPER, BLOCK_PALETTE, sizeof(BLOCK_PALETTE));
 }
