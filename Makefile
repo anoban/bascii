@@ -20,7 +20,7 @@ build:
 	$(CC) $(INCLUDE_DIRS) ./main.c $(CCFLAGS) $(NODEBUG) -o bascii.out
 
 test:
-	$(CPP) $(TEST_INCLUDE_DIRS) ./tests/*.cpp $(GTEST_ALL) $(CPPFLAGS) -D__TEST__ $(DEBUG) -o test.out -Wno-missing-field-initializers -Wno-address
+	$(CPP) $(TEST_INCLUDE_DIRS) ./tests/*.cpp $(GTEST_ALL) $(CPPFLAGS) -D__TEST__ -O3 -g3 -o test.out -Wno-missing-field-initializers -Wno-address
 
 clean:
 	rm -f ./*.out

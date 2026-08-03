@@ -9,10 +9,8 @@
         #define _DEBUG
         #define DEBUG
     #endif
-    #define tprintf(...) fprintf(stderr, __VA_ARGS__) // tprintf for test printf
 #else
     #define _testing(...)
-    #define tprintf(...)
 #endif // _DEBUG
 
 // a header providing proxy definitions for some essential Win32 structs related to bitmaps
