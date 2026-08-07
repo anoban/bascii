@@ -55,7 +55,7 @@ Using `arithmetic_blockmapper` as the character mapper and `PALETTE_EXTENDED` as
 <div><img src="./images/readme/vendetta.jpg" width=45%>   <img src="./images/readme/vendetta_ascii.jpg" width=45%></div>
 <div><img src="./images/readme/woman.jpg" width=45%>   <img src="./images/readme/woman_ascii.jpg" width=45%></div>
 <div><img src="./images/readme/butterflies.jpg" width=45%>   <img src="./images/readme/butterflies_ascii.jpg" width=45%></div>
-<div><img src="./images/readme/toukiden.bmp" width=45%>   <img src="./images/readme/toukiden_ascii.jpg" width=45%></div>
+<div><img src="./images/readme/toukiden.jpg" width=45%>   <img src="./images/readme/toukiden_ascii.jpg" width=45%></div>
 
 
 ### ___Caveats___
