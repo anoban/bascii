@@ -48,6 +48,11 @@ typedef struct {
         unsigned short _reserved_0;
         unsigned short _reserved_1;
         unsigned       offbits;
+
+#ifdef __cplusplus // for testing
+        inline constexpr operator bool() noexcept { return type || size || _reserved_0 || _reserved_1 || offbits; }
+#endif
+
 } fhead; // bitmap file header
 #pragma pack(pop)
 static_assert(sizeof(fhead) == 14);

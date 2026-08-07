@@ -3,7 +3,7 @@
 
 __This tool is designed to handle native `Windows` bitmap files (bitmaps native to Windows OS, converts from `Microsoft Photos`, etc.) on `Linux` machines and will not handle bitmaps serialized by `Linux` based softwares such as `GIMP`, `ImageMagick` and the likes unless they meticulously match the binary format of native `Windows` bitmaps.__
 
-- Three ascii palettes are available in `<utils.h>` to choose the characters from. These are arrays of ascii characters ordered in increasing luminance. 
+- Three ascii palettes are available in `<utils.h>` to choose the characters from. These are arrays of ascii characters ordered in increasing luminance.
 
     ```C
     static const char PALETTE_MINIMAL[]  = { ... };
@@ -18,13 +18,13 @@ __This tool is designed to handle native `Windows` bitmap files (bitmaps native 
     ```C
     // uses the arithmetic average of the red, green and blue values of pixels
     static inline char __attribute__((always_inline)) arithmetic(const rgbq* const pixel, const char* const palette, unsigned plength);
-    
+
     // scales red, green and blue values of pixels with predefined weights
     static inline char __attribute__((always_inline)) weighted(...);
-    
+
     // uses the average of the minimum and maximum values amongst red, green and blue values of the pixel
     static inline char __attribute__((always_inline)) minmax(...);
-    
+
     // scales red, green and blue values of pixels with predefined weights (different from the weights of  weighted())
     static inline char __attribute__((always_inline)) luminosity(...);
     ```
@@ -33,13 +33,13 @@ __This tool is designed to handle native `Windows` bitmap files (bitmaps native 
 
     ```C
     static inline char __attribute__((always_inline)) arithmetic_blockmapper(float b, float g, float r, const char* const palette, unsigned plength);
-    
+
     static inline char __attribute__((always_inline)) weighted_blockmapper(...);
-    
+
     static inline char __attribute__((always_inline)) minmax_blockmapper(...);
-    
+
     static inline char __attribute__((always_inline)) luminosity_blockmapper(...);
-    
+
     ```
 
 - Users can pick any mappers by editing the `BASE_MAPPER` and `BLOCK_MAPPER` preprocessor definitions in `<tostring.h>`. These two do not need to be the same.
@@ -52,12 +52,10 @@ __This tool is designed to handle native `Windows` bitmap files (bitmaps native 
 
 Using `arithmetic_blockmapper` as the character mapper and `PALETTE_EXTENDED` as the character palette.<br>
 
-
-<div><img src="./images/readme/jennifer_lawrence.jpg" width=45%>   <img src="./images/readme/jennifer.jpg" width=45%></div>
-<div><img src="./images/readme/vendetta-wallpaper.jpg" width=45%>   <img src="./images/readme/vendetta.jpg" width=45%></div>
-<div><img src="./images/readme/ginger_woman.jpg" width=45%>   <img src="./images/readme/ginger.jpg" width=45%></div>
-<div><img src="./images/readme/butterflies_2.jpg" width=45%>   <img src="./images/readme/butterflies.jpg" width=45%></div>
-<div><img src="./images/readme/toukiden-2-nene.bmp" width=45%>   <img src="./images/readme/toukiden.jpg" width=45%></div>
+<div><img src="./images/readme/vendetta.jpg" width=45%>   <img src="./images/readme/vendetta_ascii.jpg" width=45%></div>
+<div><img src="./images/readme/woman.jpg" width=45%>   <img src="./images/readme/woman_ascii.jpg" width=45%></div>
+<div><img src="./images/readme/butterflies.jpg" width=45%>   <img src="./images/readme/butterflies_ascii.jpg" width=45%></div>
+<div><img src="./images/readme/toukiden.bmp" width=45%>   <img src="./images/readme/toukiden_ascii.jpg" width=45%></div>
 
 
 ### ___Caveats___

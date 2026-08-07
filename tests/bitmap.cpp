@@ -6,8 +6,13 @@
 #include <tostring.h>
 // clang-format on
 
+struct file {
+        const char* const fpath;
+        long              nbytes;
+};
+
 // all of these test images will cause to_string to reroute to to_raw_string
-static const std::map<const char* const, long> TEST_BITMAPS {
+static constexpr file TEST_BITMAPS[] {
     { "./images/tests/bobmarley.bmp",  49334 }, // file names and sizes in bytes
     {  "./images/tests/football.bmp",  44150 },
     {  "./images/tests/garfield.bmp",  73014 },
@@ -44,10 +49,10 @@ TEST(bitmap, imopen) {
     long           fsize {};
     unsigned char* buffer {};
 
-    for (const auto& pair : TEST_BITMAPS) {
-        buffer = ::imopen(pair.first, &fsize);
-        ASSERT_TRUE(buffer);           // cannot be nullptr
-        ASSERT_EQ(fsize, pair.second); // file sizes should match
+    for (const auto& f : TEST_BITMAPS) {
+        buffer = ::imopen(f.fpath, &fsize);
+        ASSERT_TRUE(buffer);        // cannot be nullptr
+        ASSERT_EQ(fsize, f.nbytes); // file sizes should match
         ::free(buffer);
         buffer = nullptr;
         fsize  = 0;
@@ -66,12 +71,12 @@ TEST(bitmap, fileheader) {
     unsigned char* buffer {};
     fhead          header {};
 
-    for (const auto& pair : TEST_BITMAPS) {
-        buffer = ::imopen(pair.first, &fsize);
+    for (const auto& f : TEST_BITMAPS) {
+        buffer = ::imopen(f.fpath, &fsize);
         header = ::fileheader(buffer, fsize);
 
         ASSERT_EQ(header.type, START_TAG_LE);
-        ASSERT_EQ(header.size, pair.second);
+        ASSERT_EQ(header.size, f.nbytes);
         ASSERT_EQ(header._reserved_0, 0);
         ASSERT_EQ(header._reserved_1, 0);
         ASSERT_EQ(header.offbits, 54U);
@@ -95,8 +100,8 @@ TEST(bitmap, infoheader) {
     unsigned char* buffer {};
     infhead        header {};
 
-    for (const auto& pair : TEST_BITMAPS) {
-        buffer = ::imopen(pair.first, &fsize);
+    for (const auto& f : TEST_BITMAPS) {
+        buffer = ::imopen(f.fpath, &fsize);
         header = ::infoheader(buffer, fsize);
 
         ASSERT_EQ(header.size, sizeof(infhead));
@@ -117,4 +122,11 @@ TEST(bitmap, infoheader) {
         ::memset(&header, 0, sizeof(fhead));
         i++;
     }
+}
+
+TEST(bitmap, bmpread) {
+    bitmap image = ::bmpread(nullptr);
+    ASSERT_FALSE(image.buffer);
+    ASSERT_FALSE(image.pixels);
+    ASSERT_FALSE(image.fileheader);
 }
