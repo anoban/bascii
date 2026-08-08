@@ -1,5 +1,6 @@
-## ___Windows bitmaps to ASCII texts___
---------------
+## ___Windows Bitmaps to ASCII art___
+--------------------
+
 
 __This tool is designed to handle native `Windows` bitmap files (bitmaps native to Windows OS, converts from `Microsoft Photos`, etc.) on `Linux` machines and will not handle bitmaps serialized by `Linux` based softwares such as `GIMP`, `ImageMagick` and the likes unless they meticulously match the binary format of native `Windows` bitmaps.__
 
@@ -50,7 +51,7 @@ __This tool is designed to handle native `Windows` bitmap files (bitmaps native 
 
 ### ___Examples___
 
-Using `arithmetic_blockmapper` as the character mapper and `PALETTE_EXTENDED` as the character palette.<br>
+Console printed examples using `arithmetic_blockmapper` as the character mapper and `PALETTE_EXTENDED` as the character palette.<br>
 
 <div><img src="./images/readme/vendetta.jpg" width=45%>   <img src="./images/readme/vendetta_ascii.jpg" width=45%></div>
 <div><img src="./images/readme/woman.jpg" width=45%>   <img src="./images/readme/woman_ascii.jpg" width=45%></div>

@@ -24,7 +24,12 @@
 
 //----------------------------------
 
-static inline char* to_raw_string(
+typedef struct string {
+        char*              buffer; // character buffer
+        unsigned long long size;   // buffer size including the null terminator
+} string;
+
+static inline string to_raw_string(
     const bitmap* const image, char (*mapper)(const rgbq* const, const char* const, unsigned), const char* const palette, unsigned psize
 ) {
     if (pixelorder(&image->infoheader) == TOPDOWN) {
@@ -35,7 +40,7 @@ static inline char* to_raw_string(
             __FILE__,
             __LINE__
         );
-        return NULL;
+        return (string) {};
     }
 
     const long long npixels = (long long) (image->infoheader.height) * image->infoheader.width; // total pixels in the image
@@ -46,7 +51,7 @@ static inline char* to_raw_string(
     char* const buffer = (char*) malloc(nchars + 1); // and the +1 is for the NULL terminator
     if (!buffer) {
         fprintf(stderr, "Error in function %s in file %s at line %d, memory allocation failed!\n", __FUNCTION__, __FILE__, __LINE__);
-        return NULL;
+        return (string) {};
     }
 
     // pixels are organized in rows from bottom to top and, within each row, from left to right, each row is called a "scan line".
@@ -84,13 +89,13 @@ static inline char* to_raw_string(
             nchars
         );
         free(buffer);
-        return NULL;
+        return (string) {};
     }
 
-    return buffer;
+    return { buffer, nchars };
 }
 
-static inline char* to_downscaled_string(
+static inline string to_downscaled_string(
     const bitmap* const image, char (*mapper)(float, float, float, const char* const, unsigned), const char* const palette, unsigned psize
 ) {
     // generate the character buffer after downscaling the image such that the ASCII representation will fit the terminal width (~142 chars)
@@ -105,7 +110,7 @@ static inline char* to_downscaled_string(
             __FILE__,
             __LINE__
         );
-        return NULL;
+        return (string) {};
     }
 
     const long long block_dim   = ceil(image->infoheader.width / CONSOLE_WIDTHR); // dimension of an individual square block
@@ -132,7 +137,7 @@ static inline char* to_downscaled_string(
             incomplete_blocksize_right,
             blocksize
         );
-        return NULL;
+        return (string) {};
     }
 
     // similarly, when the image height is indivisible without remainders by the block height, the last row of blocks (upper most in the image)
@@ -151,7 +156,7 @@ static inline char* to_downscaled_string(
             incomplete_blocksize_bottom,
             blocksize
         );
-        return NULL;
+        return (string) {};
     }
 
     /*
@@ -194,7 +199,7 @@ static inline char* to_downscaled_string(
     char* const buffer            = (char*) malloc(nchars);
     if (!buffer) {
         fprintf(stderr, "Error in function %s in file %s at line %d memory allocation failed!\n", __FUNCTION__, __FILE__, __LINE__);
-        return NULL;
+        return (string) {};
     }
 
     // THESE DIMENSIONS DO NOT APPLY TO THE INCOMPLETE BLOCK AT THE BOTTOM RIGHT CORNER - WHICH CAN POSSIBLY HAVE A WIDTH AND A HEIGHT BOTH LESS THAN THE BLOCK DIMENSION
@@ -314,11 +319,15 @@ static inline char* to_downscaled_string(
 
     assert(caret == nchars);
 
-    return buffer;
+    return { buffer, nchars };
 }
 
 // an image width dependent dispatcher for to_raw_string and to_downscaled_string, that actually do the heavy lifting
-static inline char* to_string(const bitmap* const image) {
+static inline char* to_string(
+    const bitmap* const image,
+    bool                console, // this specifies whether the output is supposed to fit within the console - 140 characters wide
+    const char* const   txtfile  // if the console argument is false - this can specify where to save the ascii art to
+) {
     // make sure these macros are valid
     static_assert(BASE_PALETTE != NULL);
     static_assert(BLOCK_PALETTE != NULL);
@@ -327,6 +336,15 @@ static inline char* to_string(const bitmap* const image) {
     static_assert(sizeof(BASE_PALETTE) >= sizeof(PALETTE_BASE)); // must be greater than or equal to the size of the smallest palette
     static_assert(sizeof(BLOCK_PALETTE) >= sizeof(PALETTE_BASE));
 
-    if (image->infoheader.width <= CONSOLE_WIDTH) return to_raw_string(image, BASE_MAPPER, BASE_PALETTE, sizeof(BASE_PALETTE));
-    return to_downscaled_string(image, BLOCK_MAPPER, BLOCK_PALETTE, sizeof(BLOCK_PALETTE));
+    if (console) { // if the ascii art is intended to be printed out to the console - be consderate of the console width
+        if (image->infoheader.width <= CONSOLE_WIDTH) return to_raw_string(image, BASE_MAPPER, BASE_PALETTE, sizeof(BASE_PALETTE));
+        return to_downscaled_string(image, BLOCK_MAPPER, BLOCK_PALETTE, sizeof(BLOCK_PALETTE));
+    }
+
+    // else map every pixel to a character
+    const char* const txt = to_raw_string(image, BASE_MAPPER, BASE_PALETTE, sizeof(BASE_PALETTE));
+    if (txtfile) // write the ascii art to the file
+        ;
+
+    return txt;
 }
