@@ -53,7 +53,7 @@ CLOSE_AND_RETURN:
 }
 
 // a file format agnostic write routine to serialize binary image files, if a file with the specified name exists on disk, it will be overwritten
-static inline bool write(const char* const filename, const unsigned char* const buffer, const long buffsize) {
+static inline bool _write(const char* const filename, const char* const buffer, const long buffsize) {
     assert(filename); // too much??
     if (!buffer) {
         fprintf(stderr, "Empty buffer passed to function %s at line %d\n", __FUNCTION__, __LINE__);

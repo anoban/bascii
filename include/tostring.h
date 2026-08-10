@@ -16,16 +16,16 @@
 #define CONSOLE_WIDTH  140
 #define CONSOLE_WIDTHR ((double) (CONSOLE_WIDTH))
 
-#define BASE_MAPPER    arithmetic
-#define BASE_PALETTE   PALETTE_EXTENDED
+#define BASE_MAPPER    luminosity
+#define BASE_PALETTE   PALETTE_BASE
 
 #define BLOCK_MAPPER   arithmetic_blockmapper
 #define BLOCK_PALETTE  PALETTE_EXTENDED
 
 //----------------------------------
 
-typedef struct string {
-        char*              buffer; // character buffer
+typedef struct string { // a simple string struct - because we need the buffer size when using the ascii buffers with write functions
+        char*              buffer; // char buffer
         unsigned long long size;   // buffer size including the null terminator
 } string;
 
@@ -92,7 +92,7 @@ static inline string to_raw_string(
         return (string) {};
     }
 
-    return { buffer, nchars };
+    return (string) { buffer, nchars };
 }
 
 static inline string to_downscaled_string(
@@ -319,14 +319,13 @@ static inline string to_downscaled_string(
 
     assert(caret == nchars);
 
-    return { buffer, nchars };
+    return (string) { buffer, nchars };
 }
 
 // an image width dependent dispatcher for to_raw_string and to_downscaled_string, that actually do the heavy lifting
-static inline char* to_string(
+static inline string to_string(
     const bitmap* const image,
-    bool                console, // this specifies whether the output is supposed to fit within the console - 140 characters wide
-    const char* const   txtfile  // if the console argument is false - this can specify where to save the ascii art to
+    bool                console // this specifies whether the output is supposed to fit within the console - 140 characters wide
 ) {
     // make sure these macros are valid
     static_assert(BASE_PALETTE != NULL);
@@ -342,9 +341,5 @@ static inline char* to_string(
     }
 
     // else map every pixel to a character
-    const char* const txt = to_raw_string(image, BASE_MAPPER, BASE_PALETTE, sizeof(BASE_PALETTE));
-    if (txtfile) // write the ascii art to the file
-        ;
-
-    return txt;
+    return to_raw_string(image, BASE_MAPPER, BASE_PALETTE, sizeof(BASE_PALETTE));
 }
