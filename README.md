@@ -67,13 +67,16 @@ File serialized example using `luminosity` as the character mapper and `PALETTE_
 ### ___Caveats___
 
 - Doesn't support any other image formats.
+
 - Only supports __Windows native bitmaps__ with bottom-up scanline ordering (majority of the `Win32` bitmaps in contemporary use are of this type). Bitmaps with top-down scanline order will result in a runtime error.
 
+- Monospaced typefaces are critical to get decent renders, with non-monospaced typefaces, text lines won't align properly (i.e. two lines with 140 characters will most likely take up different lengths on the terminal), making the text renders incoherent.
+
+- The distortion in the image dimension during ascii mapping comes from the inherent non-square shaped nature of most typefaces. Even with monospaced typefaces, characters are taller than they are wide. This unfortunately makes the ascii representations look vertically stretched (as shown in the examples) :confounded:
+
 - __Caveats specific to console outputs:__
-    - When the ascii art is reqested as a console output, a __downscaling__ happens in the character mapping in order to fit the ascii art in the console (140 characters wide - by default), hence it incurs following less desirable side effects.
+    - When the ascii art is reqested as a console output, a __downscaling__ happens in the character mapping in order to fit the ascii art in the console (140 characters wide - by default), hence it incurs some less desirable side effects.
     - Not particularly good at capturing specific details in images, especially if the images are large and those details are represented by granular differences in colour gradients (this specificity gets lost in the black and white transformation and downscaling).
     - Best results with colour images are obtained when there's a stark contrast between the object of interest and the background.
-    - Monospaced typefaces are critical to get decent renders, with non-monospaced typefaces, text lines won't align properly (i.e. two lines with 140 characters will most likely take up different lengths on the terminal), making the text renders incoherent.
-    - The distortion in the image dimension during ascii mapping comes from the inherent non-square shaped nature of most typefaces. Even with monospaced typefaces, characters are taller than they are wide! This unfortunately makes the ascii representations look vertically stretched (as shown in the examples) :confounded:
-
+    
 ___For a comprehensive explanation of the implementation, browse the source code, it is thoroughly annotated!.___
